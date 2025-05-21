@@ -1,6 +1,7 @@
 package com.dreamsportslabs.guardian.rest;
 
 import static com.dreamsportslabs.guardian.constant.Constants.TENANT_ID;
+import static com.dreamsportslabs.guardian.constant.Constants.USER_RESPONSE_IS_NEW_USER;
 
 import com.dreamsportslabs.guardian.dto.request.V1PasswordlessInitRequestDto;
 import com.dreamsportslabs.guardian.dto.response.V1PasswordlessInitResponseDto;
@@ -41,7 +42,7 @@ public class PasswordlessInit {
                             .resends(model.getResends())
                             .resendsLeft(model.getMaxResends() - model.getResends())
                             .resendAfter(model.getResendAfter())
-                            .isNewUser(model.getUser().get("isNewUser") != null)
+                            .isNewUser(model.getUser().get(USER_RESPONSE_IS_NEW_USER) != null)
                             .state(model.getState())
                             .build())
                     .build())
