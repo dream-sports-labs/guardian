@@ -1,5 +1,18 @@
 package com.dreamsportslabs.guardian.service.impl.idproviders;
 
+import static com.dreamsportslabs.guardian.constant.Constants.DELIMITER_COMMA;
+import static com.dreamsportslabs.guardian.constant.Constants.FACEBOOK_FIELDS_EMAIL;
+import static com.dreamsportslabs.guardian.constant.Constants.FACEBOOK_FIELDS_FIRST_NAME;
+import static com.dreamsportslabs.guardian.constant.Constants.FACEBOOK_FIELDS_FULL_NAME;
+import static com.dreamsportslabs.guardian.constant.Constants.FACEBOOK_FIELDS_LAST_NAME;
+import static com.dreamsportslabs.guardian.constant.Constants.FACEBOOK_FIELDS_MIDDLE_NAME;
+import static com.dreamsportslabs.guardian.constant.Constants.FACEBOOK_FIELDS_PICTURE;
+import static com.dreamsportslabs.guardian.constant.Constants.FACEBOOK_FIELDS_USER_ID;
+import static com.dreamsportslabs.guardian.constant.Constants.FACEBOOK_GRAPHQL_HOST;
+import static com.dreamsportslabs.guardian.constant.Constants.FACEBOOK_ME_QUERY_FILTER_ACCESS_TOKEN;
+import static com.dreamsportslabs.guardian.constant.Constants.FACEBOOK_ME_QUERY_FILTER_APP_SECRET_PROOF;
+import static com.dreamsportslabs.guardian.constant.Constants.FACEBOOK_ME_QUERY_FILTER_FIELDS;
+import static com.dreamsportslabs.guardian.constant.Constants.FACEBOOK_ME_QUERY_PATH;
 import static com.dreamsportslabs.guardian.exception.ErrorEnum.INTERNAL_SERVER_ERROR;
 import static com.dreamsportslabs.guardian.exception.ErrorEnum.INVALID_REQUEST;
 
@@ -18,7 +31,7 @@ import org.apache.commons.lang3.StringUtils;
 public class FacebookIdProvider implements IdProvider {
   private final WebClient webClient;
   private final String appSecret;
-  private final String fields = "id,name,first_name,middle_name,last_name,email,picture";
+  private final String fields = buildFacebookFieldList();
 
   public FacebookIdProvider(FbConfig fbConfigDto) {
     this.webClient = GuiceInjector.getGuiceInjector().getInstance(WebClient.class);
@@ -32,17 +45,17 @@ public class FacebookIdProvider implements IdProvider {
             .hashString(accessToken, StandardCharsets.UTF_8)
             .toString();
     return webClient
-        .get(443, "graph.facebook.com", "/me")
+        .get(443, FACEBOOK_GRAPHQL_HOST, FACEBOOK_ME_QUERY_PATH)
         .ssl(true)
-        .addQueryParam("access_token", accessToken)
-        .addQueryParam("appsecret_proof", appSecret)
-        .addQueryParam("fields", this.fields)
+        .addQueryParam(FACEBOOK_ME_QUERY_FILTER_ACCESS_TOKEN, accessToken)
+        .addQueryParam(FACEBOOK_ME_QUERY_FILTER_APP_SECRET_PROOF, appSecret)
+        .addQueryParam(FACEBOOK_ME_QUERY_FILTER_FIELDS, this.fields)
         .rxSend()
         .map(
             res -> {
               if (res.statusCode() == 200) {
                 JsonObject jsonBody = res.bodyAsJsonObject();
-                if (StringUtils.isNotBlank(jsonBody.getString("email"))) {
+                if (StringUtils.isNotBlank(jsonBody.getString(FACEBOOK_FIELDS_EMAIL))) {
                   return jsonBody;
                 } else {
                   throw INVALID_REQUEST.getCustomException("Email unavailable");
@@ -53,5 +66,21 @@ public class FacebookIdProvider implements IdProvider {
                 throw INTERNAL_SERVER_ERROR.getException();
               }
             });
+  }
+
+  public String buildFacebookFieldList() {
+    return FACEBOOK_FIELDS_USER_ID
+        + DELIMITER_COMMA
+        + FACEBOOK_FIELDS_FULL_NAME
+        + DELIMITER_COMMA
+        + FACEBOOK_FIELDS_FIRST_NAME
+        + DELIMITER_COMMA
+        + FACEBOOK_FIELDS_MIDDLE_NAME
+        + DELIMITER_COMMA
+        + FACEBOOK_FIELDS_LAST_NAME
+        + DELIMITER_COMMA
+        + FACEBOOK_FIELDS_EMAIL
+        + DELIMITER_COMMA
+        + FACEBOOK_FIELDS_PICTURE;
   }
 }
