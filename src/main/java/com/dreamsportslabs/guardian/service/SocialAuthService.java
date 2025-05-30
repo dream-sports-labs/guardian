@@ -72,7 +72,7 @@ public class SocialAuthService {
                         headers,
                         getFbProviderData(fbUserData, dto.getAccessToken()),
                         tenantId)
-                    .map(res -> userRes);
+                    .andThen(Single.just(userRes));
               }
             })
         .flatMap(
@@ -146,7 +146,7 @@ public class SocialAuthService {
                         headers,
                         getGoogleProviderData(googleUserData, dto.getIdToken()),
                         tenantId)
-                    .map(res -> userRes);
+                    .andThen(Single.just(userRes));
               }
             })
         .flatMap(
