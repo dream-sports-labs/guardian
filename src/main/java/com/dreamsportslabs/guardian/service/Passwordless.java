@@ -278,7 +278,7 @@ public class Passwordless {
                   .andThen(Single.just(model));
             })
         .map(OtpGenerateModel::updateResend)
-        .flatMap(model -> passwordlessDao.setOtpGenerateModel(model, tenantId));
+        .flatMap(model -> passwordlessDao.setOtpGenerateModel(model, cacheKey));
   }
 
   public Single<Boolean> verifyOtpOnly(String state, String otp, String tenantId) {
@@ -299,7 +299,7 @@ public class Passwordless {
               }
 
               return passwordlessDao
-                  .setOtpGenerateModel(model, tenantId)
+                  .setOtpGenerateModel(model, cacheKey)
                   .flatMap(
                       m ->
                           Single.error(
