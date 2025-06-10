@@ -10,5 +10,7 @@ public class ScopeModel {
   private String scope;
   private String displayName;
   private String description;
+  private String iconUrl;
   private List<String> claims;
+  private Boolean isOidc;
 }
