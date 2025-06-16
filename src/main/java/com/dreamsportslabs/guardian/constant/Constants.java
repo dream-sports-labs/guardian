@@ -83,4 +83,6 @@ public final class Constants {
 
   public static final String ACCESS_TOKEN_COOKIE_NAME = "AT";
   public static final String REFRESH_TOKEN_COOKIE_NAME = "RT";
+
+  public static final String UNAUTHORIZED_ERROR_CODE = "unauthorized";
 }
