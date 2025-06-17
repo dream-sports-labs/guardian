@@ -1,25 +1,10 @@
 package com.dreamsportslabs.guardian.dao;
 
-import static com.dreamsportslabs.guardian.dao.query.ConfigQuery.AUTH_CODE_CONFIG;
-import static com.dreamsportslabs.guardian.dao.query.ConfigQuery.EMAIL_CONFIG;
-import static com.dreamsportslabs.guardian.dao.query.ConfigQuery.FB_AUTH_CONFIG;
-import static com.dreamsportslabs.guardian.dao.query.ConfigQuery.GOOGLE_AUTH_CONFIG;
-import static com.dreamsportslabs.guardian.dao.query.ConfigQuery.OTP_CONFIG;
-import static com.dreamsportslabs.guardian.dao.query.ConfigQuery.SMS_CONFIG;
-import static com.dreamsportslabs.guardian.dao.query.ConfigQuery.TOKEN_CONFIG;
-import static com.dreamsportslabs.guardian.dao.query.ConfigQuery.USER_CONFIG;
+import static com.dreamsportslabs.guardian.dao.query.ConfigQuery.*;
 import static com.dreamsportslabs.guardian.exception.ErrorEnum.INVALID_REQUEST;
 
 import com.dreamsportslabs.guardian.client.MysqlClient;
-import com.dreamsportslabs.guardian.config.tenant.AuthCodeConfig;
-import com.dreamsportslabs.guardian.config.tenant.EmailConfig;
-import com.dreamsportslabs.guardian.config.tenant.FbConfig;
-import com.dreamsportslabs.guardian.config.tenant.GoogleConfig;
-import com.dreamsportslabs.guardian.config.tenant.OtpConfig;
-import com.dreamsportslabs.guardian.config.tenant.SmsConfig;
-import com.dreamsportslabs.guardian.config.tenant.TenantConfig;
-import com.dreamsportslabs.guardian.config.tenant.TokenConfig;
-import com.dreamsportslabs.guardian.config.tenant.UserConfig;
+import com.dreamsportslabs.guardian.config.tenant.*;
 import com.dreamsportslabs.guardian.utils.JsonUtils;
 import com.google.inject.Inject;
 import io.reactivex.rxjava3.core.Completable;
@@ -45,7 +30,8 @@ public class ConfigDao {
             appendFbConfig(tenantId, builder),
             appendGoogleConfig(tenantId, builder),
             appendSmsConfig(tenantId, builder),
-            appendOtpConfig(tenantId, builder));
+            appendOtpConfig(tenantId, builder),
+            appendOidcConfig(tenantId, builder));
     return Completable.merge(configSources)
         .andThen(Single.defer(() -> Single.just(builder.build())));
   }
@@ -98,6 +84,16 @@ public class ConfigDao {
     return getConfigFromDb(tenantId, SmsConfig.class, SMS_CONFIG)
         .map(builder::smsConfig)
         .ignoreElement();
+  }
+
+  private Completable appendOidcConfig(String tenantId, TenantConfig.TenantConfigBuilder builder) {
+    return getConfigFromDb(tenantId, OIDCConfig.class, OIDC_CONFIG)
+        .map(builder::oidcConfig)
+        .ignoreElement();
+  }
+
+  public Single<OIDCConfig> getOidcConfig(String tenantId) {
+    return getConfigFromDb(tenantId, OIDCConfig.class, OIDC_CONFIG);
   }
 
   private <T> Single<T> getConfigFromDb(String tenantId, Class<T> configType, String query) {
