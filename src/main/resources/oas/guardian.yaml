@@ -301,6 +301,367 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/admin/client:
+    post:
+      tags:
+        - Client Management
+      summary: Create a new OIDC client
+      description: |
+        Creates a new OIDC client for the tenant. The client can be used for OAuth2/OIDC flows.
+        
+        A unique client ID and secure client secret are automatically generated.
+        
+        Grant types and response types must be valid OAuth2/OIDC values.
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateClientRequest'
+        required: true
+      responses:
+        '201':
+          description: Client created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientResponse'
+        '400':
+          description: Bad Request due to invalid data or validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflict - Client name already exists for this tenant
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      tags:
+        - Client Management
+      summary: List OIDC clients
+      description: |
+        Retrieves a paginated list of OIDC clients for the tenant.
+        
+        Supports pagination through page and size query parameters.
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - name: page
+          in: query
+          description: Page number (0-based)
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Clients retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientListResponse'
+        '400':
+          description: Bad Request due to invalid pagination parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/admin/client/{clientId}:
+    get:
+      tags:
+        - Client Management
+      summary: Get OIDC client by ID
+      description: |
+        Retrieves a specific OIDC client by its ID for the tenant.
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - name: clientId
+          in: path
+          description: Unique identifier of the client
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Client retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientResponse'
+        '404':
+          description: Client not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags:
+        - Client Management
+      summary: Update OIDC client
+      description: |
+        Updates an existing OIDC client. Only provided fields will be updated.
+        
+        Client ID and client secret cannot be modified.
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - name: clientId
+          in: path
+          description: Unique identifier of the client
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateClientRequest'
+        required: true
+      responses:
+        '200':
+          description: Client updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientResponse'
+        '400':
+          description: Bad Request due to invalid data or validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Client not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags:
+        - Client Management
+      summary: Delete OIDC client
+      description: |
+        Deletes an OIDC client and all its associated scopes.
+        
+        This action cannot be undone.
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - name: clientId
+          in: path
+          description: Unique identifier of the client
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Client deleted successfully
+        '404':
+          description: Client not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/admin/client/{clientId}/scope:
+    post:
+      tags:
+        - Client Scope Management
+      summary: Add scope to OIDC client
+      description: |
+        Assigns a scope to an OIDC client. The scope must exist before it can be assigned.
+        
+        Each scope can only be assigned once to a client.
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - name: clientId
+          in: path
+          description: Unique identifier of the client
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateClientScopeRequest'
+        required: true
+      responses:
+        '201':
+          description: Scope added to client successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientScopeResponse'
+        '400':
+          description: Bad Request due to invalid data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Client or scope not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflict - Scope already assigned to client
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      tags:
+        - Client Scope Management
+      summary: List client scopes
+      description: |
+        Retrieves a paginated list of scopes assigned to an OIDC client.
+        
+        Supports pagination through page and size query parameters.
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - name: clientId
+          in: path
+          description: Unique identifier of the client
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          description: Page number (0-based)
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Client scopes retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientScopeListResponse'
+        '400':
+          description: Bad Request due to invalid pagination parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Client not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/admin/client/{clientId}/scope/{scopeId}:
+    delete:
+      tags:
+        - Client Scope Management
+      summary: Remove scope from OIDC client
+      description: |
+        Removes a scope assignment from an OIDC client.
+        
+        The scope itself is not deleted, only the assignment to the client.
+      parameters:
+        - $ref: '#/components/parameters/TenantIdHeader'
+        - name: clientId
+          in: path
+          description: Unique identifier of the client
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: scopeId
+          in: path
+          description: Unique identifier of the scope
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Scope removed from client successfully
+        '404':
+          description: Client, scope, or client-scope assignment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 components:
   parameters:
     TenantIdHeader:
@@ -508,3 +869,263 @@ components:
           type: integer
           example: 3600
           description: expiry of the access token in seconds
+
+    # OIDC Client Management Schemas
+    CreateClientRequest:
+      type: object
+      required:
+        - clientName
+        - clientUri
+      properties:
+        clientName:
+          type: string
+          description: Human-readable name of the client
+          example: "My OAuth2 Application"
+          maxLength: 255
+        clientUri:
+          type: string
+          format: uri
+          description: URI of the client's homepage
+          example: "https://myapp.example.com"
+        contacts:
+          type: array
+          description: Contact email addresses for the client
+          items:
+            type: string
+            format: email
+          example: ["admin@example.com", "support@example.com"]
+        grantTypes:
+          type: array
+          description: OAuth2 grant types that the client can use
+          items:
+            type: string
+            enum: ["authorization_code", "client_credentials", "refresh_token"]
+          example: ["authorization_code", "refresh_token"]
+          default: ["authorization_code"]
+        responseTypes:
+          type: array
+          description: OAuth2 response types that the client can use
+          items:
+            type: string
+            enum: ["code", "token"]
+          example: ["code"]
+        redirectUris:
+          type: array
+          description: Valid redirect URIs for the client
+          items:
+            type: string
+            format: uri
+          example: ["https://myapp.example.com/callback", "https://myapp.example.com/oauth/callback"]
+        logoUri:
+          type: string
+          format: uri
+          description: URI of the client's logo
+          example: "https://myapp.example.com/logo.png"
+        policyUri:
+          type: string
+          format: uri
+          description: URI of the client's privacy policy
+          example: "https://myapp.example.com/privacy"
+        skipConsent:
+          type: boolean
+          description: Whether to skip the consent screen for this client
+          default: false
+
+    UpdateClientRequest:
+      type: object
+      properties:
+        clientName:
+          type: string
+          description: Human-readable name of the client
+          example: "Updated OAuth2 Application"
+          maxLength: 255
+        clientUri:
+          type: string
+          format: uri
+          description: URI of the client's homepage
+          example: "https://myapp.example.com"
+        contacts:
+          type: array
+          description: Contact email addresses for the client
+          items:
+            type: string
+            format: email
+          example: ["admin@example.com", "support@example.com"]
+        grantTypes:
+          type: array
+          description: OAuth2 grant types that the client can use
+          items:
+            type: string
+            enum: ["authorization_code", "client_credentials", "refresh_token"]
+          example: ["authorization_code", "refresh_token"]
+        responseTypes:
+          type: array
+          description: OAuth2 response types that the client can use
+          items:
+            type: string
+            enum: ["code", "token"]
+          example: ["code"]
+        redirectUris:
+          type: array
+          description: Valid redirect URIs for the client
+          items:
+            type: string
+            format: uri
+          example: ["https://myapp.example.com/callback"]
+        logoUri:
+          type: string
+          format: uri
+          description: URI of the client's logo
+          example: "https://myapp.example.com/logo.png"
+        policyUri:
+          type: string
+          format: uri
+          description: URI of the client's privacy policy
+          example: "https://myapp.example.com/privacy"
+        skipConsent:
+          type: boolean
+          description: Whether to skip the consent screen for this client
+
+    ClientResponse:
+      type: object
+      properties:
+        tenantId:
+          type: string
+          description: Tenant identifier
+          example: "tenant1"
+        clientId:
+          type: string
+          format: uuid
+          description: Unique identifier of the client
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        clientName:
+          type: string
+          description: Human-readable name of the client
+          example: "My OAuth2 Application"
+        clientSecret:
+          type: string
+          description: Client secret for authentication
+          example: "abc123def456ghi789jkl012mno345pqr678"
+        clientUri:
+          type: string
+          format: uri
+          description: URI of the client's homepage
+          example: "https://myapp.example.com"
+        contacts:
+          type: array
+          description: Contact email addresses for the client
+          items:
+            type: string
+            format: email
+          example: ["admin@example.com"]
+        grantTypes:
+          type: array
+          description: OAuth2 grant types that the client can use
+          items:
+            type: string
+          example: ["authorization_code", "refresh_token"]
+        responseTypes:
+          type: array
+          description: OAuth2 response types that the client can use
+          items:
+            type: string
+          example: ["code"]
+        redirectUris:
+          type: array
+          description: Valid redirect URIs for the client
+          items:
+            type: string
+            format: uri
+          example: ["https://myapp.example.com/callback"]
+        logoUri:
+          type: string
+          format: uri
+          description: URI of the client's logo
+          example: "https://myapp.example.com/logo.png"
+        policyUri:
+          type: string
+          format: uri
+          description: URI of the client's privacy policy
+          example: "https://myapp.example.com/privacy"
+        skipConsent:
+          type: boolean
+          description: Whether to skip the consent screen for this client
+          example: false
+
+    ClientListResponse:
+      type: object
+      properties:
+        clients:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClientResponse'
+        totalCount:
+          type: integer
+          description: Total number of clients
+          example: 25
+        page:
+          type: integer
+          description: Current page number (0-based)
+          example: 0
+        size:
+          type: integer
+          description: Number of items per page
+          example: 20
+
+    # Client-Scope Management Schemas
+    CreateClientScopeRequest:
+      type: object
+      required:
+        - scopeId
+      properties:
+        scopeId:
+          type: string
+          format: uuid
+          description: Unique identifier of the scope to assign
+          example: "550e8400-e29b-41d4-a716-446655440001"
+
+    ClientScopeResponse:
+      type: object
+      properties:
+        tenantId:
+          type: string
+          description: Tenant identifier
+          example: "tenant1"
+        clientId:
+          type: string
+          format: uuid
+          description: Unique identifier of the client
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        scopeId:
+          type: string
+          format: uuid
+          description: Unique identifier of the scope
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        scopeName:
+          type: string
+          description: Name of the assigned scope
+          example: "user.read"
+        scopeDescription:
+          type: string
+          description: Description of the assigned scope
+          example: "Read access to user information"
+
+    ClientScopeListResponse:
+      type: object
+      properties:
+        scopes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClientScopeResponse'
+        totalCount:
+          type: integer
+          description: Total number of scopes assigned to the client
+          example: 5
+        page:
+          type: integer
+          description: Current page number (0-based)
+          example: 0
+        size:
+          type: integer
+          description: Number of items per page
+          example: 20
