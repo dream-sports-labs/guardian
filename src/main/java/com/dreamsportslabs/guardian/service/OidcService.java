@@ -12,7 +12,7 @@ import com.dreamsportslabs.guardian.exception.OidcErrorEnum;
 import com.dreamsportslabs.guardian.registry.Registry;
 import com.google.inject.Inject;
 import io.reactivex.rxjava3.core.Single;
-import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -29,8 +29,7 @@ public class OidcService {
   private final AuthorizeSessionDao authorizeSessionDao;
   private final Registry registry;
 
-  public Single<AuthorizeResponseDto> authorize(
-      AuthorizeRequestDto requestDto, MultivaluedMap<String, String> headers, String tenantId) {
+  public Single<Response> authorize(AuthorizeRequestDto requestDto, String tenantId) {
 
     return getAndValidateClient(requestDto, tenantId)
         .flatMap(client -> processAuthorization(client, requestDto, tenantId));
@@ -42,12 +41,12 @@ public class OidcService {
         .getClient(requestDto.getClientId(), tenantId)
         .switchIfEmpty(
             Single.error(
-                OidcErrorEnum.INVALID_REQUEST.getCustomException(
+                OidcErrorEnum.INVALID_REQUEST.getRedirectCustomException(
                     "Invalid client_id", requestDto.getState(), requestDto.getRedirectUri())))
         .flatMap(client -> validateClient(client, requestDto, tenantId));
   }
 
-  private Single<AuthorizeResponseDto> processAuthorization(
+  private Single<Response> processAuthorization(
       ClientModel client, AuthorizeRequestDto requestDto, String tenantId) {
 
     String loginChallenge = generateLoginChallenge();
@@ -68,7 +67,7 @@ public class OidcService {
     return new AuthorizeSessionModel(requestDto, allowedScopes, client);
   }
 
-  private Single<AuthorizeResponseDto> saveSessionAndCreateResponse(
+  private Single<Response> saveSessionAndCreateResponse(
       String loginChallenge,
       AuthorizeSessionModel sessionModel,
       AuthorizeRequestDto requestDto,
@@ -78,19 +77,21 @@ public class OidcService {
         .saveAuthorizeSession(loginChallenge, sessionModel, tenantId, 600)
         .andThen(
             Single.fromCallable(
-                () -> createAuthorizeResponse(loginChallenge, requestDto, tenantId)));
-  }
+                () -> {
+                  TenantConfig tenantConfig = registry.get(tenantId, TenantConfig.class);
+                  String loginPageUri =
+                      tenantConfig.getOidcConfig() != null
+                          ? tenantConfig.getOidcConfig().getLoginPageUri()
+                          : null;
 
-  private AuthorizeResponseDto createAuthorizeResponse(
-      String loginChallenge, AuthorizeRequestDto requestDto, String tenantId) {
-
-    TenantConfig tenantConfig = registry.get(tenantId, TenantConfig.class);
-    String loginPageUri =
-        tenantConfig.getOidcConfig() != null
-            ? tenantConfig.getOidcConfig().getLoginPageUri()
-            : null;
-
-    return new AuthorizeResponseDto(loginChallenge, requestDto.getState(), loginPageUri);
+                  return new AuthorizeResponseDto(
+                          loginChallenge,
+                          requestDto.getState(),
+                          loginPageUri,
+                          requestDto.getPrompt(),
+                          requestDto.getLoginHint())
+                      .toResponse();
+                }));
   }
 
   private Single<ClientModel> validateClient(
@@ -104,7 +105,7 @@ public class OidcService {
   private void validateRedirectUri(ClientModel client, AuthorizeRequestDto requestDto) {
     if (client.getRedirectUris() == null
         || !client.getRedirectUris().contains(requestDto.getRedirectUri())) {
-      throw OidcErrorEnum.INVALID_REQUEST.getCustomException(
+      throw OidcErrorEnum.INVALID_REQUEST.getRedirectCustomException(
           "Invalid redirect_uri", requestDto.getState(), requestDto.getRedirectUri());
     }
   }
@@ -112,7 +113,7 @@ public class OidcService {
   private void validateResponseType(ClientModel client, AuthorizeRequestDto requestDto) {
     if (client.getResponseTypes() == null
         || !client.getResponseTypes().contains(requestDto.getResponseType())) {
-      throw OidcErrorEnum.UNSUPPORTED_RESPONSE_TYPE.getCustomException(
+      throw OidcErrorEnum.UNSUPPORTED_RESPONSE_TYPE.getRedirectCustomException(
           "Unsupported response_type", requestDto.getState(), requestDto.getRedirectUri());
     }
   }
@@ -129,7 +130,7 @@ public class OidcService {
     }
 
     if (!hasOpenid) {
-      throw OidcErrorEnum.INVALID_SCOPE.getCustomException(
+      throw OidcErrorEnum.INVALID_SCOPE.getRedirectCustomException(
           "scope must contain 'openid'", requestDto.getState(), requestDto.getRedirectUri());
     }
   }
@@ -147,9 +148,8 @@ public class OidcService {
 
               List<String> allowedScopes = new ArrayList<>();
               for (String scope : requestedScopeArray) {
-                String trimmedScope = scope.trim();
-                if (clientAllowedScopes.contains(trimmedScope)) {
-                  allowedScopes.add(trimmedScope);
+                if (clientAllowedScopes.contains(scope)) {
+                  allowedScopes.add(scope);
                 }
               }
 

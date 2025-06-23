@@ -47,6 +47,7 @@ public final class Constants {
       ImmutableList.of(CODE, TOKEN);
   public static final ImmutableList<String> registerResponseTypes = ImmutableList.of(CODE, TOKEN);
   public static final ImmutableList<String> loginResponseTypes = ImmutableList.of(CODE, TOKEN);
+  public static final ImmutableList<String> oidcResponseTypes = ImmutableList.of(CODE);
 
   public static final ArrayList<String> prohibitedForwardingHeaders = new ArrayList<>();
 
@@ -87,4 +88,22 @@ public final class Constants {
   // OIDC Configuration
   public static final String LOGIN_PAGE_URI = "login_page_uri";
   public static final String AUTHORIZE_TTL = "authorize_ttl";
+
+  // OIDC Prompt Values
+  public static final String OIDC_PROMPT_LOGIN = "login";
+  public static final String OIDC_PROMPT_CONSENT = "consent";
+  public static final String OIDC_PROMPT_NONE = "none";
+  public static final String OIDC_PROMPT_SELECT_ACCOUNT = "select_account";
+
+  // OIDC Code Challenge Methods
+  public static final String OIDC_CODE_CHALLENGE_METHOD_PLAIN = "Plain";
+  public static final String OIDC_CODE_CHALLENGE_METHOD_S256 = "S256";
+
+  // OIDC Parameters
+  public static final String OIDC_PARAM_ERROR = "error";
+  public static final String OIDC_PARAM_ERROR_DESCRIPTION = "error_description";
+  public static final String OIDC_PARAM_STATE = "state";
+  public static final String OIDC_PARAM_LOGIN_CHALLENGE = "login_challenge";
+  public static final String OIDC_PARAM_LOGIN_HINT = "login_hint";
+  public static final String OIDC_PARAM_PROMPT = "prompt";
 }
