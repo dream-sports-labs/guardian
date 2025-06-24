@@ -93,4 +93,21 @@ public class ConfigQuery {
     FROM otp_config
     WHERE tenant_id = ?
     """;
+
+  public static final String OIDC_PROVIDER_CONFIG =
+      """
+    SELECT tenant_id,
+           provider_name,
+           issuer,
+           jwks_url,
+           token_url,
+           client_id,
+           client_secret,
+           redirect_uri,
+           is_ssl_enabled,
+           user_identifier,
+           audience_claims
+    FROM oidc_provider_config
+    WHERE tenant_id = ? AND provider_name = ?
+    """;
 }
