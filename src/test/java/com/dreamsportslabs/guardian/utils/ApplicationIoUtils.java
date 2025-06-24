@@ -104,4 +104,31 @@ public class ApplicationIoUtils {
 
     return execute(null, headers, new HashMap<>(), spec -> spec.get("/v1/certs"));
   }
+
+  public static Response blockContactFlows(String tenantId, Map<String, Object> body) {
+    Map<String, String> headers = new HashMap<>();
+    headers.put(HEADER_TENANT_ID, tenantId);
+    headers.put(CONTENT_TYPE, "application/json");
+
+    return execute(body, headers, new HashMap<>(), spec -> spec.post("/v1/contact/block"));
+  }
+
+  public static Response unblockContactFlows(String tenantId, Map<String, Object> body) {
+    Map<String, String> headers = new HashMap<>();
+    headers.put(HEADER_TENANT_ID, tenantId);
+    headers.put(CONTENT_TYPE, "application/json");
+
+    return execute(body, headers, new HashMap<>(), spec -> spec.post("/v1/contact/unblock"));
+  }
+
+  public static Response getBlockedFlows(String tenantId, String contactId) {
+    Map<String, String> headers = new HashMap<>();
+    headers.put(HEADER_TENANT_ID, tenantId);
+
+    return execute(
+        null,
+        headers,
+        new HashMap<>(),
+        spec -> spec.get("/v1/contact/" + contactId + "/blocked-flows"));
+  }
 }
