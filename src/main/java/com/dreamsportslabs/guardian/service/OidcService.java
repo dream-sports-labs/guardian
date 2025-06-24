@@ -12,7 +12,6 @@ import com.dreamsportslabs.guardian.exception.OidcErrorEnum;
 import com.dreamsportslabs.guardian.registry.Registry;
 import com.google.inject.Inject;
 import io.reactivex.rxjava3.core.Single;
-import jakarta.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -29,69 +28,52 @@ public class OidcService {
   private final AuthorizeSessionDao authorizeSessionDao;
   private final Registry registry;
 
-  public Single<Response> authorize(AuthorizeRequestDto requestDto, String tenantId) {
-
-    return getAndValidateClient(requestDto, tenantId)
-        .flatMap(client -> processAuthorization(client, requestDto, tenantId));
-  }
-
-  private Single<ClientModel> getAndValidateClient(
-      AuthorizeRequestDto requestDto, String tenantId) {
+  public Single<AuthorizeResponseDto> authorize(AuthorizeRequestDto requestDto, String tenantId) {
     return clientService
         .getClient(requestDto.getClientId(), tenantId)
         .switchIfEmpty(
             Single.error(
                 OidcErrorEnum.INVALID_REQUEST.getRedirectCustomException(
                     "Invalid client_id", requestDto.getState(), requestDto.getRedirectUri())))
-        .flatMap(client -> validateClient(client, requestDto, tenantId));
-  }
-
-  private Single<Response> processAuthorization(
-      ClientModel client, AuthorizeRequestDto requestDto, String tenantId) {
-
-    String loginChallenge = generateLoginChallenge();
-
-    return filterSupportedScopes(requestDto.getClientId(), requestDto.getScope(), tenantId)
-        .map(allowedScopes -> createAuthorizeSession(requestDto, allowedScopes, client))
+        .flatMap(client -> validateClient(client, requestDto, tenantId))
         .flatMap(
-            sessionModel ->
-                saveSessionAndCreateResponse(loginChallenge, sessionModel, requestDto, tenantId));
+            client -> {
+              String loginChallenge = generateLoginChallenge();
+
+              return clientScopeDao
+                  .getClientScopes(requestDto.getClientId(), tenantId)
+                  .map(clientScopes -> filterAllowedScopes(requestDto.getScope(), clientScopes))
+                  .map(
+                      allowedScopes -> new AuthorizeSessionModel(requestDto, allowedScopes, client))
+                  .flatMap(
+                      sessionModel ->
+                          authorizeSessionDao
+                              .saveAuthorizeSession(loginChallenge, sessionModel, tenantId, 600)
+                              .andThen(
+                                  Single.fromCallable(
+                                      () -> createResponse(loginChallenge, requestDto, tenantId))));
+            });
   }
 
   private String generateLoginChallenge() {
     return UUID.randomUUID().toString();
   }
 
-  private AuthorizeSessionModel createAuthorizeSession(
-      AuthorizeRequestDto requestDto, List<String> allowedScopes, ClientModel client) {
-    return new AuthorizeSessionModel(requestDto, allowedScopes, client);
-  }
+  private AuthorizeResponseDto createResponse(
+      String loginChallenge, AuthorizeRequestDto requestDto, String tenantId) {
 
-  private Single<Response> saveSessionAndCreateResponse(
-      String loginChallenge,
-      AuthorizeSessionModel sessionModel,
-      AuthorizeRequestDto requestDto,
-      String tenantId) {
+    TenantConfig tenantConfig = registry.get(tenantId, TenantConfig.class);
+    String loginPageUri =
+        tenantConfig.getOidcConfig() != null
+            ? tenantConfig.getOidcConfig().getLoginPageUri()
+            : null;
 
-    return authorizeSessionDao
-        .saveAuthorizeSession(loginChallenge, sessionModel, tenantId, 600)
-        .andThen(
-            Single.fromCallable(
-                () -> {
-                  TenantConfig tenantConfig = registry.get(tenantId, TenantConfig.class);
-                  String loginPageUri =
-                      tenantConfig.getOidcConfig() != null
-                          ? tenantConfig.getOidcConfig().getLoginPageUri()
-                          : null;
-
-                  return new AuthorizeResponseDto(
-                          loginChallenge,
-                          requestDto.getState(),
-                          loginPageUri,
-                          requestDto.getPrompt(),
-                          requestDto.getLoginHint())
-                      .toResponse();
-                }));
+    return new AuthorizeResponseDto(
+        loginChallenge,
+        requestDto.getState(),
+        loginPageUri,
+        requestDto.getPrompt(),
+        requestDto.getLoginHint());
   }
 
   private Single<ClientModel> validateClient(
@@ -135,25 +117,20 @@ public class OidcService {
     }
   }
 
-  private Single<List<String>> filterSupportedScopes(
-      String clientId, String requestedScopes, String tenantId) {
+  private List<String> filterAllowedScopes(
+      String requestedScopes, List<ClientScopeModel> clientScopes) {
     String[] requestedScopeArray = requestedScopes.split(" ");
+    Set<String> clientAllowedScopes =
+        clientScopes.stream().map(ClientScopeModel::getScope).collect(Collectors.toSet());
 
-    return clientScopeDao
-        .getClientScopes(clientId, tenantId)
-        .map(
-            clientScopes -> {
-              Set<String> clientAllowedScopes =
-                  clientScopes.stream().map(ClientScopeModel::getScope).collect(Collectors.toSet());
+    List<String> allowedScopes = new ArrayList<>();
+    for (String scope : requestedScopeArray) {
+      String trimmedScope = scope.trim();
+      if (clientAllowedScopes.contains(trimmedScope)) {
+        allowedScopes.add(trimmedScope);
+      }
+    }
 
-              List<String> allowedScopes = new ArrayList<>();
-              for (String scope : requestedScopeArray) {
-                if (clientAllowedScopes.contains(scope)) {
-                  allowedScopes.add(scope);
-                }
-              }
-
-              return allowedScopes;
-            });
+    return allowedScopes;
   }
 }

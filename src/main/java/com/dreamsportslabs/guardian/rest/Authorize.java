@@ -33,6 +33,7 @@ public class Authorize {
 
     return oidcService
         .authorize(requestDto, headers.getHeaderString(TENANT_ID))
+        .map(authorizeResponseDto -> authorizeResponseDto.toResponse())
         .toCompletionStage();
   }
 }

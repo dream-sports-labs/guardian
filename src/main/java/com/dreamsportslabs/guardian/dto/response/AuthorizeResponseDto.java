@@ -2,6 +2,7 @@ package com.dreamsportslabs.guardian.dto.response;
 
 import static com.dreamsportslabs.guardian.constant.Constants.OIDC_PARAM_LOGIN_CHALLENGE;
 import static com.dreamsportslabs.guardian.constant.Constants.OIDC_PARAM_LOGIN_HINT;
+import static com.dreamsportslabs.guardian.constant.Constants.OIDC_PARAM_PROMPT;
 import static com.dreamsportslabs.guardian.constant.Constants.OIDC_PARAM_STATE;
 
 import jakarta.ws.rs.core.Response;
@@ -30,7 +31,7 @@ public class AuthorizeResponseDto {
     }
 
     if (prompt != null) {
-      uriBuilder.queryParam(OIDC_PARAM_STATE, prompt);
+      uriBuilder.queryParam(OIDC_PARAM_PROMPT, prompt);
     }
 
     if (loginHint != null) {

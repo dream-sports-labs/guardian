@@ -15,4 +15,16 @@ public enum OidcResponseType {
   public String getValue() {
     return type;
   }
+
+  public static boolean isValid(String value) {
+    if (value == null) {
+      return false;
+    }
+    for (OidcResponseType type : values()) {
+      if (type.getValue().equals(value)) {
+        return true;
+      }
+    }
+    return false;
+  }
 }

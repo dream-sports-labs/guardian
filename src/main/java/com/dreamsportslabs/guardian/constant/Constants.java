@@ -89,15 +89,9 @@ public final class Constants {
   public static final String LOGIN_PAGE_URI = "login_page_uri";
   public static final String AUTHORIZE_TTL = "authorize_ttl";
 
-  // OIDC Prompt Values
-  public static final String OIDC_PROMPT_LOGIN = "login";
-  public static final String OIDC_PROMPT_CONSENT = "consent";
-  public static final String OIDC_PROMPT_NONE = "none";
-  public static final String OIDC_PROMPT_SELECT_ACCOUNT = "select_account";
-
-  // OIDC Code Challenge Methods
-  public static final String OIDC_CODE_CHALLENGE_METHOD_PLAIN = "Plain";
-  public static final String OIDC_CODE_CHALLENGE_METHOD_S256 = "S256";
+  // OIDC Enums (see OidcPrompt and OidcCodeChallengeMethod classes)
+  // Prompt values: login, consent, none, select_account
+  // Code challenge methods: Plain, S256
 
   // OIDC Parameters
   public static final String OIDC_PARAM_ERROR = "error";
