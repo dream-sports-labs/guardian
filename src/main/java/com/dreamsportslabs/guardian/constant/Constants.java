@@ -16,6 +16,7 @@ public final class Constants {
   public static final String IS_NEW_USER = "isNewUser";
 
   public static final String EXPIRY_OPTION_REDIS = "EX";
+  public static final String KEEP_TTL = "KEEPTTL";
   public static final String STATIC_OTP_NUMBER = "9";
 
   // Application config
@@ -47,7 +48,6 @@ public final class Constants {
       ImmutableList.of(CODE, TOKEN);
   public static final ImmutableList<String> registerResponseTypes = ImmutableList.of(CODE, TOKEN);
   public static final ImmutableList<String> loginResponseTypes = ImmutableList.of(CODE, TOKEN);
-  public static final ImmutableList<String> oidcResponseTypes = ImmutableList.of(CODE);
 
   public static final ArrayList<String> prohibitedForwardingHeaders = new ArrayList<>();
 
@@ -85,15 +85,9 @@ public final class Constants {
   public static final String ACCESS_TOKEN_COOKIE_NAME = "AT";
   public static final String REFRESH_TOKEN_COOKIE_NAME = "RT";
 
-  // OIDC Configuration
   public static final String LOGIN_PAGE_URI = "login_page_uri";
   public static final String AUTHORIZE_TTL = "authorize_ttl";
 
-  // OIDC Enums (see OidcPrompt and OidcCodeChallengeMethod classes)
-  // Prompt values: login, consent, none, select_account
-  // Code challenge methods: Plain, S256
-
-  // OIDC Parameters
   public static final String OIDC_PARAM_ERROR = "error";
   public static final String OIDC_PARAM_ERROR_DESCRIPTION = "error_description";
   public static final String OIDC_PARAM_STATE = "state";
