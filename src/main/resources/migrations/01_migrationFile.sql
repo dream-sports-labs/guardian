@@ -216,7 +216,6 @@ CREATE TABLE `oidc_config` (
                                `response_types_supported` JSON NOT NULL DEFAULT (JSON_ARRAY()),
                                `subject_types_supported` JSON NOT NULL DEFAULT (JSON_ARRAY()),
                                `id_token_signing_alg_values_supported` JSON NOT NULL DEFAULT (JSON_ARRAY()),
-                               `userinfo_signing_alg_values_supported` JSON NOT NULL DEFAULT (JSON_ARRAY()),
                                `token_endpoint_auth_methods_supported` JSON NOT NULL DEFAULT (JSON_ARRAY()),
                                `default_resources` JSON NOT NULL DEFAULT (JSON_ARRAY()),
                                `login_page_uri` VARCHAR(512) DEFAULT NULL,
@@ -237,7 +236,7 @@ CREATE TABLE `oidc_config` (
 CREATE TABLE `scope` (
                          `id` INT NOT NULL AUTO_INCREMENT,
                          `tenant_id` CHAR(10) NOT NULL,
-                         `scope` VARCHAR(100) NOT NULL,
+                         `name` VARCHAR(100) NOT NULL,
                          `display_name` VARCHAR(100),
                          `description` VARCHAR(1000),
                          `icon_url` VARCHAR(2083),
@@ -247,7 +246,7 @@ CREATE TABLE `scope` (
                          `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
                          PRIMARY KEY (`id`),
-                         UNIQUE KEY `uniq_tenant_scope` (`tenant_id`, `scope`)
+                         UNIQUE KEY `uniq_tenant_scope` (`tenant_id`, `name`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci;

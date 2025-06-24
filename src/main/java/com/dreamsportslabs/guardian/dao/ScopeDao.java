@@ -52,7 +52,7 @@ public class ScopeDao {
     ScopeModel scope = new ScopeModel();
     scope.setId(row.getInteger("id"));
     scope.setTenantId(row.getString("tenant_id"));
-    scope.setScope(row.getString("scope"));
+    scope.setScope(row.getString("name"));
     scope.setDisplayName(row.getString("display_name"));
     scope.setDescription(row.getString("description"));
     scope.setIconUrl(row.getString("icon_url"));
