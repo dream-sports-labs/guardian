@@ -55,6 +55,7 @@ public final class Constants {
   public static final String JWT_CLAIMS_IAT = "iat";
   public static final String JWT_CLAIMS_EXP = "exp";
   public static final String JWT_CLAIMS_RFT_ID = "rft_id";
+  public static final String JWT_CLAIMS_AUD = "aud";
 
   public static final ImmutableList<String> fbAuthResponseTypes = ImmutableList.of(CODE, TOKEN);
   public static final ImmutableList<String> passwordlessAuthResponseTypes =

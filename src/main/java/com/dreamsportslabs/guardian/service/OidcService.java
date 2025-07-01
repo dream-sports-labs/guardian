@@ -33,6 +33,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -52,50 +53,58 @@ public class OidcService {
       IdpConnectRequestDto requestDto, MultivaluedMap<String, String> headers, String tenantId) {
     return oidcProviderDao
         .getOidcProviderConfig(tenantId, requestDto.getIdProvider())
-        .switchIfEmpty(Single.error(PROVIDER_NOT_FOUND.getException()))
         .flatMap(
             providerConfig -> {
               String userIdentifier = providerConfig.getUserIdentifier();
               String providerName = requestDto.getIdProvider();
 
-              return getProviderTokens(requestDto, providerConfig)
+              return exchangeCodeForTokens(requestDto, providerConfig)
+                  .flatMap(idpTokens -> processTokens(idpTokens, providerConfig, requestDto))
                   .flatMap(
-                      idpTokens ->
-                          Single.just(
-                                  validateIdToken(
-                                      idpTokens.getIdToken(),
-                                      providerConfig,
-                                      requestDto.getNonce()))
-                              .filter(isValid -> isValid)
-                              .switchIfEmpty(
-                                  Single.error(
-                                      INVALID_IDP_TOKEN.getCustomException(
-                                          "Token validation failed")))
-                              .map(ignored -> idpTokens)
-                              .map(
-                                  tokens -> {
-                                    Provider provider =
-                                        getProviderDtoFromTokens(
-                                            tokens, providerName, userIdentifier);
-                                    return getUserDtoFromTokens(tokens.getIdToken(), provider);
-                                  })
-                              .flatMap(
-                                  userDto ->
-                                      checkUserIdentifierAndUserExists(
-                                              userIdentifier,
-                                              userDto,
-                                              requestDto.getIdProvider(),
-                                              requestDto.getFlow(),
-                                              headers,
-                                              providerConfig)
-                                          .flatMap(
-                                              userJson ->
-                                                  loginUser(
-                                                      userJson, requestDto, headers, tenantId))
-                                          .map(
-                                              response ->
-                                                  buildIdpConnectResponse(response, idpTokens))));
+                      tokens ->
+                          initiateUserLoginFlow(
+                              tokens,
+                              requestDto,
+                              headers,
+                              tenantId,
+                              providerName,
+                              userIdentifier,
+                              providerConfig));
             });
+  }
+
+  private Single<IdpCredentialsModel> processTokens(
+      IdpCredentialsModel idpTokens,
+      OidcProviderConfig providerConfig,
+      IdpConnectRequestDto requestDto) {
+    return Single.just(
+            validateIdToken(idpTokens.getIdToken(), providerConfig, requestDto.getNonce()))
+        .filter(isValid -> isValid)
+        .switchIfEmpty(
+            Single.error(INVALID_IDP_TOKEN.getCustomException("Token validation failed")))
+        .map(ignored -> idpTokens);
+  }
+
+  private Single<IdpConnectResponseDto> initiateUserLoginFlow(
+      IdpCredentialsModel idpTokens,
+      IdpConnectRequestDto requestDto,
+      MultivaluedMap<String, String> headers,
+      String tenantId,
+      String providerName,
+      String userIdentifier,
+      OidcProviderConfig providerConfig) {
+    Provider provider = getProviderDtoFromTokens(idpTokens, providerName, userIdentifier);
+    UserDto userDto = getUserDtoFromTokens(idpTokens.getIdToken(), provider);
+
+    return checkUserIdentifierAndUserExists(
+            userIdentifier,
+            userDto,
+            requestDto.getIdProvider(),
+            requestDto.getFlow(),
+            headers,
+            providerConfig)
+        .flatMap(userJson -> loginUser(userJson, requestDto, headers, tenantId))
+        .map(response -> buildIdpConnectResponse(response, idpTokens));
   }
 
   private Provider getProviderDtoFromTokens(
@@ -160,8 +169,7 @@ public class OidcService {
     try {
       String[] jwtParts = idToken.split("\\.");
       String kid =
-          new JsonObject(new String(java.util.Base64.getUrlDecoder().decode(jwtParts[0])))
-              .getString("kid");
+          new JsonObject(new String(Base64.getUrlDecoder().decode(jwtParts[0]))).getString("kid");
 
       JSONWebKey matchingKey =
           JSONWebKeySetHelper.retrieveKeysFromJWKS(providerConfig.getJwksUrl()).stream()
@@ -172,7 +180,6 @@ public class OidcService {
       if (matchingKey == null) {
         return false;
       }
-
       JWT jwt =
           JWT.getDecoder().decode(idToken, RSAVerifier.newVerifier(JSONWebKey.parse(matchingKey)));
       return validateClaims(jwt, providerConfig, nonce);
@@ -182,14 +189,14 @@ public class OidcService {
   }
 
   private boolean validateClaims(JWT jwt, OidcProviderConfig config, String nonce) {
-    if (!config.getIssuer().equals(jwt.getString("iss"))) {
+    if (!config.getIssuer().equals(jwt.getString(JWT_CLAIMS_ISS))) {
       return false;
     }
-    if (!config.getClientId().equals(jwt.getString("aud"))) {
+    if (!config.getClientId().equals(jwt.getString(JWT_CLAIMS_AUD))) {
       return false;
     }
 
-    Object expClaim = jwt.getAllClaims().get("exp");
+    Object expClaim = jwt.getAllClaims().get(JWT_CLAIMS_EXP);
     long expSeconds;
     if (expClaim instanceof ZonedDateTime) {
       expSeconds = ((ZonedDateTime) expClaim).toEpochSecond();
@@ -207,13 +214,6 @@ public class OidcService {
     }
 
     return true;
-  }
-
-  private Single<IdpCredentialsModel> getProviderTokens(
-      IdpConnectRequestDto requestDto, OidcProviderConfig providerConfig) {
-    return exchangeCodeForTokens(requestDto, providerConfig)
-        .onErrorResumeNext(
-            err -> Single.error(INVALID_IDP_CODE.getCustomException(err.getMessage())));
   }
 
   private Single<JsonObject> checkUserIdentifierAndUserExists(
@@ -287,9 +287,7 @@ public class OidcService {
       IdpConnectRequestDto requestDto,
       MultivaluedMap<String, String> headers,
       String tenantId) {
-
     Boolean isNewUser = userJson.getBoolean("isNewUser", false);
-
     return loginUser(
         userJson.getString(USERID),
         requestDto.getResponseType(),
@@ -330,17 +328,7 @@ public class OidcService {
   private IdpConnectResponseDto buildIdpConnectResponse(
       Response response, IdpCredentialsModel idpTokens) {
     JsonObject responseBody = (JsonObject) response.getEntity();
-
-    return IdpConnectResponseDto.builder()
-        .code(responseBody.getString("code"))
-        .accessToken(responseBody.getString("accessToken"))
-        .refreshToken(responseBody.getString("refreshToken"))
-        .idToken(responseBody.getString("idToken"))
-        .tokenType(responseBody.getString("tokenType"))
-        .expiresIn(responseBody.getInteger("expiresIn"))
-        .isNewUser(responseBody.getBoolean("isNewUser", false))
-        .idpCredentials(idpTokens)
-        .build();
+    return IdpConnectResponseDto.fromResponse(responseBody, idpTokens);
   }
 
   public Single<IdpCredentialsModel> exchangeCodeForTokens(
