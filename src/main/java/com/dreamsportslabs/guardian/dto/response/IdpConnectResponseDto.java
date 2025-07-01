@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class IdpConnectResponseDto {
+  private String code;
   private String accessToken;
   private String refreshToken;
   private String idToken;

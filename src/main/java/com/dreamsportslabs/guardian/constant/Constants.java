@@ -118,4 +118,5 @@ public final class Constants {
   public static final String OIDC_ACCESS_TOKEN = "access_token";
   public static final String OIDC_REFRESH_TOKEN = "refresh_token";
   public static final String OIDC_ID_TOKEN = "id_token";
+  public static final String AUTHORIZATION = "Authorization";
 }
