@@ -24,6 +24,7 @@ import static com.dreamsportslabs.guardian.utils.ApplicationIoUtils.createScope;
 import static com.dreamsportslabs.guardian.utils.ApplicationIoUtils.deleteScope;
 import static com.dreamsportslabs.guardian.utils.ApplicationIoUtils.listScopes;
 import static com.dreamsportslabs.guardian.utils.ApplicationIoUtils.listScopesByNames;
+import static com.dreamsportslabs.guardian.utils.DbUtils.cleanUpScopes;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
@@ -39,12 +40,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EmptySource;
 
 public class GetScopeIT {
+
+  @BeforeAll
+  public static void setup() {
+    // Ensure the test environment is clean before each test
+    cleanUpScopes(TENANT_1);
+    cleanUpScopes(TENANT_2);
+  }
+
   @Test
   @DisplayName("Should list scopes including created one")
   public void testListScopesWithCreatedScope() {
@@ -383,6 +393,73 @@ public class GetScopeIT {
     // Cleanup
     deleteScope(TENANT_1, scopeName);
     deleteScope(TENANT_2, scopeName);
+  }
+
+  @Test
+  @DisplayName("Should correctly calculate pagination offset for multiple pages")
+  public void testPaginationOffsetCalculation() {
+    // Arrange - Create 7 scopes to test pagination across multiple pages
+    String scope1 = "scope-" + RandomStringUtils.randomAlphabetic(5) + "-1";
+    String scope2 = "scope-" + RandomStringUtils.randomAlphabetic(5) + "-2";
+    String scope3 = "scope-" + RandomStringUtils.randomAlphabetic(5) + "-3";
+    String scope4 = "scope-" + RandomStringUtils.randomAlphabetic(5) + "-4";
+    String scope5 = "scope-" + RandomStringUtils.randomAlphabetic(5) + "-5";
+    String scope6 = "scope-" + RandomStringUtils.randomAlphabetic(5) + "-6";
+    String scope7 = "scope-" + RandomStringUtils.randomAlphabetic(5) + "-7";
+
+    createScope(TENANT_1, valid(scope1));
+    createScope(TENANT_1, valid(scope2));
+    createScope(TENANT_1, valid(scope3));
+    createScope(TENANT_1, valid(scope4));
+    createScope(TENANT_1, valid(scope5));
+    createScope(TENANT_1, valid(scope6));
+    createScope(TENANT_1, valid(scope7));
+
+    // Act & Validate - Test Page 1 (pageSize=3 should get first 3 scopes)
+    Response page1Response =
+        listScopes(TENANT_1, Map.of(QUERY_PARAM_PAGE, "1", QUERY_PARAM_PAGE_SIZE, "3"));
+    page1Response.then().statusCode(SC_OK).body("scopes.size()", equalTo(3));
+
+    List<String> page1Scopes = page1Response.jsonPath().getList("scopes.name", String.class);
+
+    // Act & Validate - Test Page 2 (pageSize=3 should get next 3 scopes with correct offset)
+    Response page2Response =
+        listScopes(TENANT_1, Map.of(QUERY_PARAM_PAGE, "2", QUERY_PARAM_PAGE_SIZE, "3"));
+    page2Response.then().statusCode(SC_OK).body("scopes.size()", equalTo(3));
+
+    List<String> page2Scopes = page2Response.jsonPath().getList("scopes.name", String.class);
+
+    // Act & Validate - Test Page 3 (pageSize=3, should get remaining scope(s))
+    Response page3Response =
+        listScopes(TENANT_1, Map.of(QUERY_PARAM_PAGE, "3", QUERY_PARAM_PAGE_SIZE, "3"));
+    page3Response.then().statusCode(SC_OK).body("scopes.size()", equalTo(1));
+
+    List<String> page3Scopes = page3Response.jsonPath().getList("scopes.name", String.class);
+
+    // Validate that pages don't overlap (no duplicate scopes across pages)
+    assertThat(
+        "Page 1 and Page 2 should not have overlapping scopes",
+        page1Scopes.stream().noneMatch(page2Scopes::contains),
+        equalTo(true));
+
+    if (!page3Scopes.isEmpty()) {
+      assertThat(
+          "Page 1 and Page 3 should not have overlapping scopes",
+          page1Scopes.stream().noneMatch(page3Scopes::contains),
+          equalTo(true));
+      assertThat(
+          "Page 2 and Page 3 should not have overlapping scopes",
+          page2Scopes.stream().noneMatch(page3Scopes::contains),
+          equalTo(true));
+    }
+    // Cleanup
+    deleteScope(TENANT_1, scope1);
+    deleteScope(TENANT_1, scope2);
+    deleteScope(TENANT_1, scope3);
+    deleteScope(TENANT_1, scope4);
+    deleteScope(TENANT_1, scope5);
+    deleteScope(TENANT_1, scope6);
+    deleteScope(TENANT_1, scope7);
   }
 
   private Map<String, Object> valid(String scope) {
