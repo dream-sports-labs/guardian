@@ -144,6 +144,13 @@ public class ApplicationIoUtils {
     return execute(null, headers, new HashMap<>(), spec -> spec.delete("/scopes/" + scopeName));
   }
 
+  public static Response updateScope(String tenantId, String scopeName, Map<String, Object> body) {
+    Map<String, String> headers = new HashMap<>();
+    headers.put("tenant-id", tenantId);
+
+    return execute(body, headers, new HashMap<>(), spec -> spec.patch("/scopes/" + scopeName));
+  }
+
   public static Response sendOtp(
       String tenantId, Map<String, Object> body, Map<String, String> headers) {
     headers.put(HEADER_TENANT_ID, tenantId);

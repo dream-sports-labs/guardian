@@ -227,6 +227,19 @@ public class DbUtils {
     }
   }
 
+  public static void cleanUpScopes(String tenantId) {
+    String deleteScopes = "DELETE FROM scope WHERE tenant_id = ?";
+
+    try (Connection conn = mysqlConnectionPool.getConnection();
+        PreparedStatement stmt1 = conn.prepareStatement(deleteScopes)) {
+
+      stmt1.setString(1, tenantId);
+      stmt1.executeUpdate();
+    } catch (Exception e) {
+      log.error("Error while cleaning up clients", e);
+    }
+  }
+
   // Client management utilities
   public static void cleanupClients(String tenantId) {
     String deleteClientScopes = "DELETE FROM client_scope WHERE tenant_id = ?";

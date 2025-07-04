@@ -89,6 +89,17 @@ public class Constants {
   public static final String TEST_MULTIPLE_CLAIMS_SCOPE_DISPLAY_NAME = "Multiple Claims Scope";
   public static final String TEST_EXTRA_CLAIM = "extra_claim";
 
+  // Update scope test constants
+  public static final String TEST_UPDATED_DISPLAY_NAME = "Updated Display Name";
+  public static final String TEST_UPDATED_DESCRIPTION = "Updated description for testing";
+  public static final String TEST_UPDATED_ICON_URL = "https://example.com/updated-icon.png";
+  public static final String TEST_UPDATED_CLAIM = "updated_claim";
+  public static final String TEST_PARTIAL_UPDATE_DISPLAY_NAME = "Partially Updated Scope";
+
+  public static final String ERROR_CODE_SCOPE_NOT_FOUND = "scope_not_found";
+  public static final String ERROR_MSG_SCOPE_NOT_FOUND = "Scope not found";
+  public static final String ERROR_MSG_NO_UPDATES_PROVIDED = "No updates provided for scope";
+
   public static final String TENANT_1 = "tenant1";
   public static final String TENANT_2 = "tenant2";
 
@@ -142,10 +153,7 @@ public class Constants {
   public static final String ERROR_INVALID_STATE = "invalid_state";
   public static final String ERROR_RESENDS_EXHAUSTED = "resends_exhausted";
   public static final String ERROR_RETRIES_EXHAUSTED = "retries_exhausted";
-  public static final String ERROR_UNAUTHORIZED = "unauthorized";
   public static final String ERROR_SMS_SERVICE = "sms_service_error";
-  public static final String INVALID_STATE = "invalid_state";
-  public static final String ERROR_INTERNAL_ERROR = "internal_error";
 
   public static final String RESPONSE_BODY_PARAM_STATE = "state";
   public static final String RESPONSE_BODY_PARAM_TRIES = "tries";
@@ -230,8 +238,6 @@ public class Constants {
   public static final String BLANK_STRING = "   ";
   public static final int MIN_SECRET_LENGTH = 32;
   public static final int MIN_CLIENT_ID_LENGTH = 20;
-  public static final int LONG_NAME_LENGTH = 99;
-  public static final int VERY_LONG_TENANT_LENGTH = 100;
 
   // Constants for OIDC Client Scope Management
   public static final String SCOPES = "scopes";
