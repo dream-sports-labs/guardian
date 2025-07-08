@@ -1,6 +1,8 @@
 package com.dreamsportslabs.guardian.it;
 
-import static com.dreamsportslabs.guardian.utils.ApplicationIoUtils.*;
+import static com.dreamsportslabs.guardian.utils.ApplicationIoUtils.blockContactFlows;
+import static com.dreamsportslabs.guardian.utils.ApplicationIoUtils.getBlockedFlows;
+import static com.dreamsportslabs.guardian.utils.ApplicationIoUtils.unblockContactFlows;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.apache.commons.lang3.RandomStringUtils.randomNumeric;
 import static org.hamcrest.CoreMatchers.equalTo;

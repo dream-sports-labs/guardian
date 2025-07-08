@@ -2,9 +2,9 @@ package com.dreamsportslabs.guardian.dto.response;
 
 import java.util.List;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 
-@Data
+@Getter
 @Builder
 public class V1ContactBlockedFlowsResponseDto {
   private String contact;

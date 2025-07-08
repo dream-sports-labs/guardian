@@ -7,9 +7,12 @@ import static com.dreamsportslabs.guardian.Constants.BODY_PARAM_RESPONSE_TYPE_TO
 import static com.dreamsportslabs.guardian.Constants.ERROR;
 import static com.dreamsportslabs.guardian.Constants.ERROR_FLOW_BLOCKED;
 import static com.dreamsportslabs.guardian.Constants.PASSWORDLESS_FLOW_SIGNINUP;
-import static com.dreamsportslabs.guardian.utils.ApplicationIoUtils.*;
+import static com.dreamsportslabs.guardian.utils.ApplicationIoUtils.blockContactFlows;
+import static com.dreamsportslabs.guardian.utils.ApplicationIoUtils.passwordlessInit;
+import static com.dreamsportslabs.guardian.utils.ApplicationIoUtils.sendOtp;
 import static com.dreamsportslabs.guardian.utils.ApplicationIoUtils.signIn;
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.dreamsportslabs.guardian.utils.ApplicationIoUtils.signUp;
+import static com.dreamsportslabs.guardian.utils.ApplicationIoUtils.verifyOtp;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.apache.commons.lang3.RandomStringUtils.randomNumeric;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -33,8 +36,8 @@ public class ContactBlockFlowsIT {
   private static final String TENANT_ID = "tenant1";
   private static final String EMAIL_CONTACT =
       randomAlphanumeric(10) + "@" + randomAlphanumeric(5) + ".com";
-  private static final String Flow_1 = "passwordless";
-  private static final String Flow_2 = "social_auth";
+  private static final String PASSWORDLESS_FLOW = "passwordless";
+  private static final String SOCIAL_AUTH_FLOW = "social_auth";
 
   /** Common function to generate request body for block Flow */
   private Map<String, Object> generateBlockRequestBody(
@@ -96,7 +99,7 @@ public class ContactBlockFlowsIT {
     Map<String, Object> requestBody =
         generateBlockRequestBody(
             contactId,
-            new String[] {Flow_1, Flow_2},
+            new String[] {PASSWORDLESS_FLOW, SOCIAL_AUTH_FLOW},
             randomAlphanumeric(10),
             randomAlphanumeric(10),
             unblockedAt);
@@ -113,8 +116,8 @@ public class ContactBlockFlowsIT {
 
     List<String> blockedFlows = response.getBody().jsonPath().getList("blockedFlows");
     assertThat(blockedFlows.size(), equalTo(2));
-    assertThat(blockedFlows.contains(Flow_1), equalTo(true));
-    assertThat(blockedFlows.contains(Flow_2), equalTo(true));
+    assertThat(blockedFlows.contains(PASSWORDLESS_FLOW), equalTo(true));
+    assertThat(blockedFlows.contains(SOCIAL_AUTH_FLOW), equalTo(true));
   }
 
   @Test
@@ -125,7 +128,7 @@ public class ContactBlockFlowsIT {
     Map<String, Object> requestBody =
         generateBlockRequestBody(
             EMAIL_CONTACT,
-            new String[] {Flow_1},
+            new String[] {PASSWORDLESS_FLOW},
             randomAlphanumeric(10),
             randomAlphanumeric(10),
             unblockedAt);
@@ -142,7 +145,7 @@ public class ContactBlockFlowsIT {
 
     List<String> blockedFlows = response.getBody().jsonPath().getList("blockedFlows");
     assertThat(blockedFlows.size(), equalTo(1));
-    assertThat(blockedFlows.contains(Flow_1), equalTo(true));
+    assertThat(blockedFlows.contains(PASSWORDLESS_FLOW), equalTo(true));
   }
 
   @Test
@@ -154,7 +157,7 @@ public class ContactBlockFlowsIT {
     Map<String, Object> requestBody1 =
         generateBlockRequestBody(
             contactId,
-            new String[] {Flow_1},
+            new String[] {PASSWORDLESS_FLOW},
             randomAlphanumeric(10),
             randomAlphanumeric(10),
             unblockedAt1);
@@ -164,13 +167,13 @@ public class ContactBlockFlowsIT {
 
     List<String> blockedFlows1 = response1.getBody().jsonPath().getList("blockedFlows");
     assertThat(blockedFlows1.size(), equalTo(1));
-    assertThat(blockedFlows1.contains(Flow_1), equalTo(true));
+    assertThat(blockedFlows1.contains(PASSWORDLESS_FLOW), equalTo(true));
 
     Long unblockedAt2 = Instant.now().plusSeconds(7200).toEpochMilli() / 1000;
     Map<String, Object> requestBody2 =
         generateBlockRequestBody(
             contactId,
-            new String[] {Flow_1, Flow_2},
+            new String[] {PASSWORDLESS_FLOW, SOCIAL_AUTH_FLOW},
             randomAlphanumeric(10),
             randomAlphanumeric(10),
             unblockedAt2);
@@ -187,8 +190,8 @@ public class ContactBlockFlowsIT {
 
     List<String> blockedFlows2 = response2.getBody().jsonPath().getList("blockedFlows");
     assertThat(blockedFlows2.size(), equalTo(2));
-    assertThat(blockedFlows2.contains(Flow_1), equalTo(true));
-    assertThat(blockedFlows2.contains(Flow_2), equalTo(true));
+    assertThat(blockedFlows2.contains(PASSWORDLESS_FLOW), equalTo(true));
+    assertThat(blockedFlows2.contains(SOCIAL_AUTH_FLOW), equalTo(true));
   }
 
   @Test
@@ -198,7 +201,7 @@ public class ContactBlockFlowsIT {
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
 
     Map<String, Object> requestBody = new HashMap<>();
-    requestBody.put("blockFlows", new String[] {Flow_1});
+    requestBody.put("blockFlows", new String[] {PASSWORDLESS_FLOW});
     requestBody.put("reason", randomAlphanumeric(10));
     requestBody.put("operator", randomAlphanumeric(10));
     requestBody.put("unblockedAt", unblockedAt);
@@ -223,7 +226,11 @@ public class ContactBlockFlowsIT {
 
     Map<String, Object> requestBody =
         generateBlockRequestBody(
-            "", new String[] {Flow_1}, randomAlphanumeric(10), randomAlphanumeric(10), unblockedAt);
+            "",
+            new String[] {PASSWORDLESS_FLOW},
+            randomAlphanumeric(10),
+            randomAlphanumeric(10),
+            unblockedAt);
 
     // Act
     Response response = blockContactFlows(TENANT_ID, requestBody);
@@ -296,7 +303,7 @@ public class ContactBlockFlowsIT {
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> requestBody = new HashMap<>();
     requestBody.put("contact", contactId);
-    requestBody.put("blockFlows", new String[] {Flow_1});
+    requestBody.put("blockFlows", new String[] {PASSWORDLESS_FLOW});
     requestBody.put("operator", randomAlphanumeric(10));
     requestBody.put("unblockedAt", unblockedAt);
 
@@ -320,7 +327,7 @@ public class ContactBlockFlowsIT {
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> requestBody =
         generateBlockRequestBody(
-            contactId, new String[] {Flow_1}, "", randomAlphanumeric(10), unblockedAt);
+            contactId, new String[] {PASSWORDLESS_FLOW}, "", randomAlphanumeric(10), unblockedAt);
 
     // Act
     Response response = blockContactFlows(TENANT_ID, requestBody);
@@ -342,7 +349,7 @@ public class ContactBlockFlowsIT {
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> requestBody = new HashMap<>();
     requestBody.put("contact", contactId);
-    requestBody.put("blockFlows", new String[] {Flow_1});
+    requestBody.put("blockFlows", new String[] {PASSWORDLESS_FLOW});
     requestBody.put("reason", randomAlphanumeric(10));
     requestBody.put("unblockedAt", unblockedAt);
 
@@ -366,7 +373,7 @@ public class ContactBlockFlowsIT {
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> requestBody =
         generateBlockRequestBody(
-            contactId, new String[] {Flow_1}, randomAlphanumeric(10), "", unblockedAt);
+            contactId, new String[] {PASSWORDLESS_FLOW}, randomAlphanumeric(10), "", unblockedAt);
 
     // Act
     Response response = blockContactFlows(TENANT_ID, requestBody);
@@ -389,7 +396,7 @@ public class ContactBlockFlowsIT {
     Map<String, Object> requestBody =
         generateBlockRequestBody(
             contactId,
-            new String[] {Flow_1},
+            new String[] {PASSWORDLESS_FLOW},
             randomAlphanumeric(10),
             randomAlphanumeric(10),
             pastTime);
@@ -415,7 +422,7 @@ public class ContactBlockFlowsIT {
     Map<String, Object> requestBody =
         generateBlockRequestBody(
             contactId,
-            new String[] {Flow_1},
+            new String[] {PASSWORDLESS_FLOW},
             randomAlphanumeric(10),
             randomAlphanumeric(10),
             currentTime);
@@ -441,7 +448,7 @@ public class ContactBlockFlowsIT {
     Map<String, Object> requestBody =
         generateBlockRequestBody(
             contactId,
-            new String[] {Flow_1},
+            new String[] {PASSWORDLESS_FLOW},
             randomAlphanumeric(10),
             randomAlphanumeric(10),
             unblockedAt);
@@ -491,7 +498,7 @@ public class ContactBlockFlowsIT {
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> requestBody = new HashMap<>();
     requestBody.put("contact", contactId);
-    requestBody.put("blockFlows", new String[] {Flow_1});
+    requestBody.put("blockFlows", new String[] {PASSWORDLESS_FLOW});
     requestBody.put("reason", null);
     requestBody.put("operator", randomAlphanumeric(10));
     requestBody.put("unblockedAt", unblockedAt);
@@ -516,7 +523,7 @@ public class ContactBlockFlowsIT {
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> requestBody = new HashMap<>();
     requestBody.put("contact", contactId);
-    requestBody.put("blockFlows", new String[] {Flow_1});
+    requestBody.put("blockFlows", new String[] {PASSWORDLESS_FLOW});
     requestBody.put("reason", randomAlphanumeric(10));
     requestBody.put("operator", null);
     requestBody.put("unblockedAt", unblockedAt);
@@ -540,7 +547,7 @@ public class ContactBlockFlowsIT {
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> requestBody = new HashMap<>();
     requestBody.put("contact", null);
-    requestBody.put("blockFlows", new String[] {Flow_1});
+    requestBody.put("blockFlows", new String[] {PASSWORDLESS_FLOW});
     requestBody.put("reason", randomAlphanumeric(10));
     requestBody.put("operator", randomAlphanumeric(10));
     requestBody.put("unblockedAt", unblockedAt);
@@ -564,7 +571,7 @@ public class ContactBlockFlowsIT {
     String contactId = randomNumeric(10);
     Map<String, Object> requestBody = new HashMap<>();
     requestBody.put("contact", contactId);
-    requestBody.put("blockFlows", new String[] {Flow_1});
+    requestBody.put("blockFlows", new String[] {PASSWORDLESS_FLOW});
     requestBody.put("reason", randomAlphanumeric(10));
     requestBody.put("operator", randomAlphanumeric(10));
 
@@ -589,7 +596,7 @@ public class ContactBlockFlowsIT {
     Map<String, Object> requestBody =
         generateBlockRequestBody(
             contactId,
-            new String[] {Flow_1},
+            new String[] {PASSWORDLESS_FLOW},
             randomAlphanumeric(10),
             randomAlphanumeric(10),
             unblockedAt);

@@ -14,6 +14,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.rxjava3.sqlclient.Tuple;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -22,29 +23,41 @@ import lombok.extern.slf4j.Slf4j;
 public class ContactFlowBlockDao {
   private final MysqlClient mysqlClient;
 
-  public Completable blockFlows(ContactFlowBlockModel model) {
+  public Completable blockFlows(List<ContactFlowBlockModel> models) {
+
+    List<Tuple> batchParams =
+        models.stream()
+            .map(
+                model ->
+                    Tuple.tuple()
+                        .addValue(model.getTenantId())
+                        .addValue(model.getContact())
+                        .addValue(model.getFlowName())
+                        .addValue(model.getReason())
+                        .addValue(model.getOperator())
+                        .addValue(model.getUnblockedAt())
+                        .addValue(model.isActive()))
+            .collect(Collectors.toList());
+
     return mysqlClient
         .getWriterPool()
-        .preparedQuery(UPSERT_CONTACT_FLOW_BLOCK)
-        .rxExecute(
-            Tuple.tuple(
-                List.of(
-                    model.getTenantId(),
-                    model.getContact(),
-                    model.getFlowName(),
-                    model.getReason(),
-                    model.getOperator(),
-                    model.getUnblockedAt(),
-                    model.isActive())))
+        .preparedQuery(UPSERT_CONTACT_FLOW_BLOCK) // same upsert query
+        .rxExecuteBatch(batchParams)
         .onErrorResumeNext(err -> Single.error(INTERNAL_SERVER_ERROR.getException(err)))
         .ignoreElement();
   }
 
-  public Completable unblockFlows(String tenantId, String contact, String flowName) {
+  public Completable unblockFlows(String tenantId, String contact, List<String> flowNames) {
+
+    List<Tuple> batchParams =
+        flowNames.stream()
+            .map(flowName -> Tuple.of(tenantId, contact, flowName))
+            .collect(Collectors.toList());
+
     return mysqlClient
         .getWriterPool()
         .preparedQuery(UNBLOCK_CONTACT_FLOW)
-        .rxExecute(Tuple.of(tenantId, contact, flowName))
+        .rxExecuteBatch(batchParams)
         .ignoreElement();
   }
 

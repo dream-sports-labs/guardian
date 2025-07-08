@@ -19,7 +19,6 @@ public class ContactExtractionService {
 
   private final PasswordlessDao passwordlessDao;
 
-  /** Extract contact information from passwordless init request */
   public List<String> extractContactsFromPasswordlessInit(V1PasswordlessInitRequestDto requestDto) {
     if (requestDto.getContacts() == null || requestDto.getContacts().isEmpty()) {
       return List.of();
@@ -31,10 +30,6 @@ public class ContactExtractionService {
         .toList();
   }
 
-  /**
-   * Extract contact information from passwordless complete request This requires looking up the
-   * state to get the original contact information
-   */
   public Single<List<String>> extractContactsFromPasswordlessComplete(
       V1PasswordlessCompleteRequestDto requestDto, String tenantId) {
     if (StringUtils.isBlank(requestDto.getState())) {
@@ -58,7 +53,6 @@ public class ContactExtractionService {
         .toSingle();
   }
 
-  /** Extract contact information from signin request */
   public List<String> extractContactsFromSignIn(V1SignInRequestDto requestDto) {
     if (StringUtils.isBlank(requestDto.getUsername())) {
       return List.of();
@@ -68,7 +62,6 @@ public class ContactExtractionService {
     return List.of(username);
   }
 
-  /** Extract contact information from signup request */
   public List<String> extractContactsFromSignUp(V1SignUpRequestDto requestDto) {
     if (StringUtils.isBlank(requestDto.getUsername())) {
       return List.of();
