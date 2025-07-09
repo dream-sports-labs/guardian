@@ -225,7 +225,6 @@ CREATE TABLE contact_verify_config
 
 CREATE TABLE contact_flow_blocks
 (
-    id           BIGINT       NOT NULL AUTO_INCREMENT,
     tenant_id    CHAR(10)     NOT NULL,
     contact      VARCHAR(64)  NOT NULL,
     flow_name    VARCHAR(50)  NOT NULL,
@@ -235,8 +234,6 @@ CREATE TABLE contact_flow_blocks
     is_active    BOOLEAN      NOT NULL DEFAULT TRUE,
     created_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-    PRIMARY KEY (`id`),
 
     CONSTRAINT fk_tenant_contact_flow_blocks FOREIGN KEY (tenant_id)
         REFERENCES tenant (id) ON DELETE CASCADE,
