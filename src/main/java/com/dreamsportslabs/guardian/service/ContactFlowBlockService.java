@@ -32,7 +32,6 @@ public class ContactFlowBlockService {
                         .contact(dto.getContact())
                         .flowName(flowName)
                         .reason(dto.getReason())
-                        .operator(dto.getOperator())
                         .unblockedAt(dto.getUnblockedAt())
                         .isActive(true)
                         .build())

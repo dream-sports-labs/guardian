@@ -624,7 +624,7 @@ paths:
         - $ref: '#/components/parameters/TenantIdHeader'
         - name: contactId
           in: path
-          description: Contact identifier (email or phone number)
+          description: Contact identifier (email, phone number, username)
           required: true
           schema:
             type: string
@@ -967,7 +967,6 @@ components:
         - contact
         - blockFlows
         - reason
-        - operator
         - unblockedAt
       properties:
         contact:
@@ -985,10 +984,6 @@ components:
           type: string
           description: Reason for blocking the flows
           example: "Suspicious activity detected"
-        operator:
-          type: string
-          description: Identifier of the operator who initiated the block
-          example: "admin@company.com"
         unblockedAt:
           type: integer
           format: int64
@@ -998,7 +993,6 @@ components:
         contact: "user@example.com"
         blockFlows: ["passwordless", "social_auth"]
         reason: "Suspicious activity detected"
-        operator: "admin@company.com"
         unblockedAt: 1704067200
 
     V1BlockContactFlowResponse:
@@ -1028,7 +1022,6 @@ components:
       required:
         - contact
         - unblockFlows
-        - operator
       properties:
         contact:
           type: string
@@ -1041,14 +1034,9 @@ components:
             enum: [passwordless, password, social_auth, otp_verify]
           description: List of flow types to unblock
           example: ["passwordless", "social_auth"]
-        operator:
-          type: string
-          description: Identifier of the operator who initiated the unblock
-          example: "admin@company.com"
       example:
         contact: "user@example.com"
         unblockFlows: ["passwordless", "social_auth"]
-        operator: "admin@company.com"
 
     V1UnblockContactFlowResponse:
       type: object

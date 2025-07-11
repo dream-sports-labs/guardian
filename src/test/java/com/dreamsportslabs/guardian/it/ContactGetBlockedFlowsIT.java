@@ -28,14 +28,13 @@ public class ContactGetBlockedFlowsIT {
   @Test
   @DisplayName("Should get blocked Flows successfully")
   public void getBlockedFlows_success() {
-    // Arrange - First block some Flows
+    // Arrange
     String contactId = randomNumeric(10);
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> blockRequestBody = new HashMap<>();
     blockRequestBody.put("contact", contactId);
     blockRequestBody.put("blockFlows", new String[] {Flow_1, Flow_2});
     blockRequestBody.put("reason", randomAlphanumeric(10));
-    blockRequestBody.put("operator", randomAlphanumeric(10));
     blockRequestBody.put("unblockedAt", unblockedAt);
 
     Response blockResponse = blockContactFlows(TENANT_ID, blockRequestBody);
@@ -59,13 +58,12 @@ public class ContactGetBlockedFlowsIT {
   @Test
   @DisplayName("Should get blocked Flows successfully with email contact")
   public void getBlockedFlows_emailContact_success() {
-    // Arrange - First block some Flows
+    // Arrange
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> blockRequestBody = new HashMap<>();
     blockRequestBody.put("contact", EMAIL_CONTACT);
     blockRequestBody.put("blockFlows", new String[] {Flow_1});
     blockRequestBody.put("reason", randomAlphanumeric(10));
-    blockRequestBody.put("operator", randomAlphanumeric(10));
     blockRequestBody.put("unblockedAt", unblockedAt);
 
     Response blockResponse = blockContactFlows(TENANT_ID, blockRequestBody);
@@ -144,35 +142,34 @@ public class ContactGetBlockedFlowsIT {
   @Test
   @DisplayName("Should return correct blocked Flows after partial unblock")
   public void getBlockedFlows_afterPartialUnblock_success() {
-    // Arrange - First block some Flows
+    // Arrange
     String contactId = randomNumeric(10);
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> blockRequestBody = new HashMap<>();
     blockRequestBody.put("contact", contactId);
     blockRequestBody.put("blockFlows", new String[] {Flow_1, Flow_2});
     blockRequestBody.put("reason", randomAlphanumeric(10));
-    blockRequestBody.put("operator", randomAlphanumeric(10));
     blockRequestBody.put("unblockedAt", unblockedAt);
 
     Response blockResponse = blockContactFlows(TENANT_ID, blockRequestBody);
     blockResponse.then().statusCode(HttpStatus.SC_OK);
 
-    // Verify both Flows are blocked
+    // Verify
     Response initialResponse = getBlockedFlows(TENANT_ID, contactId);
     initialResponse.then().statusCode(HttpStatus.SC_OK);
     assertThat(initialResponse.getBody().jsonPath().getString("contact"), equalTo(contactId));
     assertThat(initialResponse.getBody().jsonPath().getInt("totalCount"), equalTo(2));
 
-    // Unblock one Flow
+    // Act
     Map<String, Object> unblockRequestBody = new HashMap<>();
     unblockRequestBody.put("contact", contactId);
     unblockRequestBody.put("unblockFlows", new String[] {Flow_1});
-    unblockRequestBody.put("operator", randomAlphanumeric(10));
 
+    // verify
     Response unblockResponse = unblockContactFlows(TENANT_ID, unblockRequestBody);
     unblockResponse.then().statusCode(HttpStatus.SC_OK);
 
-    // Act - Get blocked Flows again
+    // Act
     Response response = getBlockedFlows(TENANT_ID, contactId);
 
     // Assert

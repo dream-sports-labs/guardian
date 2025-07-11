@@ -14,7 +14,6 @@ public class V1BlockContactFlowRequestDto {
   private List<String> blockFlows;
   private String reason;
   private Long unblockedAt;
-  private String operator;
 
   public void validate() {
     if (StringUtils.isBlank(contact)) {
@@ -36,10 +35,6 @@ public class V1BlockContactFlowRequestDto {
 
     if (StringUtils.isBlank(reason)) {
       throw INVALID_REQUEST.getCustomException("Reason is required");
-    }
-
-    if (StringUtils.isBlank(operator)) {
-      throw INVALID_REQUEST.getCustomException("Operator is required");
     }
 
     if (unblockedAt == null) {

@@ -41,12 +41,11 @@ public class ContactBlockFlowsIT {
 
   /** Common function to generate request body for block Flow */
   private Map<String, Object> generateBlockRequestBody(
-      String contact, String[] blockFlows, String reason, String operator, Long unblockedAt) {
+      String contact, String[] blockFlows, String reason, Long unblockedAt) {
     Map<String, Object> requestBody = new HashMap<>();
     requestBody.put("contact", contact);
     requestBody.put("blockFlows", blockFlows);
     requestBody.put("reason", reason);
-    requestBody.put("operator", operator);
     requestBody.put("unblockedAt", unblockedAt);
 
     return requestBody;
@@ -101,7 +100,6 @@ public class ContactBlockFlowsIT {
             contactId,
             new String[] {PASSWORDLESS_FLOW, SOCIAL_AUTH_FLOW},
             randomAlphanumeric(10),
-            randomAlphanumeric(10),
             unblockedAt);
 
     // Act
@@ -127,11 +125,7 @@ public class ContactBlockFlowsIT {
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> requestBody =
         generateBlockRequestBody(
-            EMAIL_CONTACT,
-            new String[] {PASSWORDLESS_FLOW},
-            randomAlphanumeric(10),
-            randomAlphanumeric(10),
-            unblockedAt);
+            EMAIL_CONTACT, new String[] {PASSWORDLESS_FLOW}, randomAlphanumeric(10), unblockedAt);
 
     // Act
     Response response = blockContactFlows(TENANT_ID, requestBody);
@@ -156,11 +150,7 @@ public class ContactBlockFlowsIT {
     Long unblockedAt1 = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> requestBody1 =
         generateBlockRequestBody(
-            contactId,
-            new String[] {PASSWORDLESS_FLOW},
-            randomAlphanumeric(10),
-            randomAlphanumeric(10),
-            unblockedAt1);
+            contactId, new String[] {PASSWORDLESS_FLOW}, randomAlphanumeric(10), unblockedAt1);
 
     Response response1 = blockContactFlows(TENANT_ID, requestBody1);
     response1.then().statusCode(HttpStatus.SC_OK);
@@ -174,7 +164,6 @@ public class ContactBlockFlowsIT {
         generateBlockRequestBody(
             contactId,
             new String[] {PASSWORDLESS_FLOW, SOCIAL_AUTH_FLOW},
-            randomAlphanumeric(10),
             randomAlphanumeric(10),
             unblockedAt2);
 
@@ -203,7 +192,6 @@ public class ContactBlockFlowsIT {
     Map<String, Object> requestBody = new HashMap<>();
     requestBody.put("blockFlows", new String[] {PASSWORDLESS_FLOW});
     requestBody.put("reason", randomAlphanumeric(10));
-    requestBody.put("operator", randomAlphanumeric(10));
     requestBody.put("unblockedAt", unblockedAt);
 
     // Act
@@ -226,11 +214,7 @@ public class ContactBlockFlowsIT {
 
     Map<String, Object> requestBody =
         generateBlockRequestBody(
-            "",
-            new String[] {PASSWORDLESS_FLOW},
-            randomAlphanumeric(10),
-            randomAlphanumeric(10),
-            unblockedAt);
+            "", new String[] {PASSWORDLESS_FLOW}, randomAlphanumeric(10), unblockedAt);
 
     // Act
     Response response = blockContactFlows(TENANT_ID, requestBody);
@@ -254,7 +238,6 @@ public class ContactBlockFlowsIT {
     Map<String, Object> requestBody = new HashMap<>();
     requestBody.put("contact", contactId);
     requestBody.put("reason", randomAlphanumeric(10));
-    requestBody.put("operator", randomAlphanumeric(10));
     requestBody.put("unblockedAt", unblockedAt);
 
     // Act
@@ -276,12 +259,7 @@ public class ContactBlockFlowsIT {
     String contactId = randomNumeric(10);
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> requestBody =
-        generateBlockRequestBody(
-            contactId,
-            new String[] {},
-            randomAlphanumeric(10),
-            randomAlphanumeric(10),
-            unblockedAt);
+        generateBlockRequestBody(contactId, new String[] {}, randomAlphanumeric(10), unblockedAt);
 
     // Act
     Response response = blockContactFlows(TENANT_ID, requestBody);
@@ -304,7 +282,6 @@ public class ContactBlockFlowsIT {
     Map<String, Object> requestBody = new HashMap<>();
     requestBody.put("contact", contactId);
     requestBody.put("blockFlows", new String[] {PASSWORDLESS_FLOW});
-    requestBody.put("operator", randomAlphanumeric(10));
     requestBody.put("unblockedAt", unblockedAt);
 
     // Act
@@ -326,8 +303,7 @@ public class ContactBlockFlowsIT {
     String contactId = randomNumeric(10);
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> requestBody =
-        generateBlockRequestBody(
-            contactId, new String[] {PASSWORDLESS_FLOW}, "", randomAlphanumeric(10), unblockedAt);
+        generateBlockRequestBody(contactId, new String[] {PASSWORDLESS_FLOW}, "", unblockedAt);
 
     // Act
     Response response = blockContactFlows(TENANT_ID, requestBody);
@@ -342,52 +318,6 @@ public class ContactBlockFlowsIT {
   }
 
   @Test
-  @DisplayName("Should return error for missing operator")
-  public void blockFlow_missingOperator() {
-    // Arrange
-    String contactId = randomNumeric(10);
-    Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
-    Map<String, Object> requestBody = new HashMap<>();
-    requestBody.put("contact", contactId);
-    requestBody.put("blockFlows", new String[] {PASSWORDLESS_FLOW});
-    requestBody.put("reason", randomAlphanumeric(10));
-    requestBody.put("unblockedAt", unblockedAt);
-
-    // Act
-    Response response = blockContactFlows(TENANT_ID, requestBody);
-
-    // Assert
-    response
-        .then()
-        .statusCode(HttpStatus.SC_BAD_REQUEST)
-        .rootPath("error")
-        .body("code", equalTo("invalid_request"))
-        .body("message", equalTo("Operator is required"));
-  }
-
-  @Test
-  @DisplayName("Should return error for empty operator")
-  public void blockFlow_emptyOperator() {
-    // Arrange
-    String contactId = randomNumeric(10);
-    Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
-    Map<String, Object> requestBody =
-        generateBlockRequestBody(
-            contactId, new String[] {PASSWORDLESS_FLOW}, randomAlphanumeric(10), "", unblockedAt);
-
-    // Act
-    Response response = blockContactFlows(TENANT_ID, requestBody);
-
-    // Assert
-    response
-        .then()
-        .statusCode(HttpStatus.SC_BAD_REQUEST)
-        .rootPath("error")
-        .body("code", equalTo("invalid_request"))
-        .body("message", equalTo("Operator is required"));
-  }
-
-  @Test
   @DisplayName("Should return error for past unblockedAt")
   public void blockFlow_pastUnblockedAt() {
     // Arrange
@@ -395,11 +325,7 @@ public class ContactBlockFlowsIT {
     Long pastTime = Instant.now().minusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> requestBody =
         generateBlockRequestBody(
-            contactId,
-            new String[] {PASSWORDLESS_FLOW},
-            randomAlphanumeric(10),
-            randomAlphanumeric(10),
-            pastTime);
+            contactId, new String[] {PASSWORDLESS_FLOW}, randomAlphanumeric(10), pastTime);
 
     // Act
     Response response = blockContactFlows(TENANT_ID, requestBody);
@@ -421,11 +347,7 @@ public class ContactBlockFlowsIT {
     Long currentTime = Instant.now().toEpochMilli() / 1000;
     Map<String, Object> requestBody =
         generateBlockRequestBody(
-            contactId,
-            new String[] {PASSWORDLESS_FLOW},
-            randomAlphanumeric(10),
-            randomAlphanumeric(10),
-            currentTime);
+            contactId, new String[] {PASSWORDLESS_FLOW}, randomAlphanumeric(10), currentTime);
 
     // Act
     Response response = blockContactFlows(TENANT_ID, requestBody);
@@ -447,11 +369,7 @@ public class ContactBlockFlowsIT {
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> requestBody =
         generateBlockRequestBody(
-            contactId,
-            new String[] {PASSWORDLESS_FLOW},
-            randomAlphanumeric(10),
-            randomAlphanumeric(10),
-            unblockedAt);
+            contactId, new String[] {PASSWORDLESS_FLOW}, randomAlphanumeric(10), unblockedAt);
 
     // Act
     Response response = blockContactFlows(randomAlphanumeric(8), requestBody);
@@ -475,7 +393,6 @@ public class ContactBlockFlowsIT {
     requestBody.put("contact", contactId);
     requestBody.put("blockFlows", null);
     requestBody.put("reason", randomAlphanumeric(10));
-    requestBody.put("operator", randomAlphanumeric(10));
     requestBody.put("unblockedAt", unblockedAt);
 
     // Act
@@ -500,7 +417,6 @@ public class ContactBlockFlowsIT {
     requestBody.put("contact", contactId);
     requestBody.put("blockFlows", new String[] {PASSWORDLESS_FLOW});
     requestBody.put("reason", null);
-    requestBody.put("operator", randomAlphanumeric(10));
     requestBody.put("unblockedAt", unblockedAt);
 
     // Act
@@ -516,31 +432,6 @@ public class ContactBlockFlowsIT {
   }
 
   @Test
-  @DisplayName("Should return error for null operator")
-  public void blockFlow_nullOperator() {
-    // Arrange
-    String contactId = randomNumeric(10);
-    Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
-    Map<String, Object> requestBody = new HashMap<>();
-    requestBody.put("contact", contactId);
-    requestBody.put("blockFlows", new String[] {PASSWORDLESS_FLOW});
-    requestBody.put("reason", randomAlphanumeric(10));
-    requestBody.put("operator", null);
-    requestBody.put("unblockedAt", unblockedAt);
-
-    // Act
-    Response response = blockContactFlows(TENANT_ID, requestBody);
-
-    // Assert
-    response
-        .then()
-        .statusCode(HttpStatus.SC_BAD_REQUEST)
-        .rootPath("error")
-        .body("code", equalTo("invalid_request"))
-        .body("message", equalTo("Operator is required"));
-  }
-
-  @Test
   @DisplayName("Should return error for null contact")
   public void blockFlow_nullContact() {
     // Arrange
@@ -549,7 +440,6 @@ public class ContactBlockFlowsIT {
     requestBody.put("contact", null);
     requestBody.put("blockFlows", new String[] {PASSWORDLESS_FLOW});
     requestBody.put("reason", randomAlphanumeric(10));
-    requestBody.put("operator", randomAlphanumeric(10));
     requestBody.put("unblockedAt", unblockedAt);
 
     // Act
@@ -565,29 +455,6 @@ public class ContactBlockFlowsIT {
   }
 
   @Test
-  @DisplayName("Should return error for missing operator")
-  public void blockFlow_missingUnblockedAt() {
-    // Arrange
-    String contactId = randomNumeric(10);
-    Map<String, Object> requestBody = new HashMap<>();
-    requestBody.put("contact", contactId);
-    requestBody.put("blockFlows", new String[] {PASSWORDLESS_FLOW});
-    requestBody.put("reason", randomAlphanumeric(10));
-    requestBody.put("operator", randomAlphanumeric(10));
-
-    // Act
-    Response response = blockContactFlows(TENANT_ID, requestBody);
-
-    // Assert
-    response
-        .then()
-        .statusCode(HttpStatus.SC_BAD_REQUEST)
-        .rootPath("error")
-        .body("code", equalTo("invalid_request"))
-        .body("message", equalTo("unblockedAt is required"));
-  }
-
-  @Test
   @DisplayName("Should verify passwordless flow is blocked after blocking")
   public void verifyPasswordlessFlowBlocked() {
     // Arrange
@@ -595,11 +462,7 @@ public class ContactBlockFlowsIT {
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> requestBody =
         generateBlockRequestBody(
-            contactId,
-            new String[] {PASSWORDLESS_FLOW},
-            randomAlphanumeric(10),
-            randomAlphanumeric(10),
-            unblockedAt);
+            contactId, new String[] {PASSWORDLESS_FLOW}, randomAlphanumeric(10), unblockedAt);
 
     // Act
     Response blockResponse = blockContactFlows(TENANT_ID, requestBody);
@@ -634,11 +497,7 @@ public class ContactBlockFlowsIT {
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> blockRequestBody =
         generateBlockRequestBody(
-            testEmail,
-            new String[] {"otp_verify"},
-            randomAlphanumeric(10),
-            randomAlphanumeric(10),
-            unblockedAt);
+            testEmail, new String[] {"otp_verify"}, randomAlphanumeric(10), unblockedAt);
 
     Response blockResponse = blockContactFlows(TENANT_ID, blockRequestBody);
     blockResponse.then().statusCode(HttpStatus.SC_OK);
@@ -675,11 +534,7 @@ public class ContactBlockFlowsIT {
       Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
       Map<String, Object> blockRequestBody =
           generateBlockRequestBody(
-              testEmail,
-              new String[] {"otp_verify"},
-              randomAlphanumeric(10),
-              randomAlphanumeric(10),
-              unblockedAt);
+              testEmail, new String[] {"otp_verify"}, randomAlphanumeric(10), unblockedAt);
 
       Response blockResponse = blockContactFlows(TENANT_ID, blockRequestBody);
       blockResponse.then().statusCode(HttpStatus.SC_OK);
@@ -707,11 +562,7 @@ public class ContactBlockFlowsIT {
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> requestBody =
         generateBlockRequestBody(
-            username,
-            new String[] {"password"},
-            randomAlphanumeric(10),
-            randomAlphanumeric(10),
-            unblockedAt);
+            username, new String[] {"password"}, randomAlphanumeric(10), unblockedAt);
 
     // Act
     Response blockResponse = blockContactFlows(TENANT_ID, requestBody);
@@ -744,11 +595,7 @@ public class ContactBlockFlowsIT {
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> requestBody =
         generateBlockRequestBody(
-            username,
-            new String[] {"password"},
-            randomAlphanumeric(10),
-            randomAlphanumeric(10),
-            unblockedAt);
+            username, new String[] {"password"}, randomAlphanumeric(10), unblockedAt);
 
     // Act
     Response blockResponse = blockContactFlows(TENANT_ID, requestBody);

@@ -227,9 +227,8 @@ CREATE TABLE contact_flow_blocks
 (
     tenant_id    CHAR(10)     NOT NULL,
     contact      VARCHAR(64)  NOT NULL,
-    flow_name    VARCHAR(50)  NOT NULL,
-    reason       TEXT,
-    operator     VARCHAR(128),
+    flow_name    CHAR(20)  NOT NULL,
+    reason       VARCHAR(500),
     unblocked_at BIGINT,
     is_active    BOOLEAN      NOT NULL DEFAULT TRUE,
     created_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,

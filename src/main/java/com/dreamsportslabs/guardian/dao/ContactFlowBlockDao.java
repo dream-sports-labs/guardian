@@ -54,7 +54,6 @@ public class ContactFlowBlockDao {
                         .addValue(model.getContact())
                         .addValue(model.getFlowName())
                         .addValue(model.getReason())
-                        .addValue(model.getOperator())
                         .addValue(model.getUnblockedAt())
                         .addValue(model.isActive()))
             .collect(Collectors.toList());

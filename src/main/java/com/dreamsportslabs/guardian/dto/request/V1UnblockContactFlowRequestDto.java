@@ -11,15 +11,10 @@ import org.apache.commons.lang3.StringUtils;
 public class V1UnblockContactFlowRequestDto {
   private String contact;
   private List<String> unblockFlows;
-  private String operator;
 
   public void validate() {
     if (StringUtils.isBlank(contact)) {
       throw INVALID_REQUEST.getCustomException("Contact is required");
-    }
-
-    if (StringUtils.isBlank(operator)) {
-      throw INVALID_REQUEST.getCustomException("Operator is required");
     }
 
     if (unblockFlows == null || unblockFlows.isEmpty()) {

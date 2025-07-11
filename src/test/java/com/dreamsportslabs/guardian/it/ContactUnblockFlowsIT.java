@@ -25,12 +25,10 @@ public class ContactUnblockFlowsIT {
   private static final String Flow_2 = "social_auth";
 
   /** Common function to generate request body for unblock Flow */
-  private Map<String, Object> generateUnblockRequestBody(
-      String contact, String[] unblockFlows, String operator) {
+  private Map<String, Object> generateUnblockRequestBody(String contact, String[] unblockFlows) {
     Map<String, Object> requestBody = new HashMap<>();
     requestBody.put("contact", contact);
     requestBody.put("unblockFlows", unblockFlows);
-    requestBody.put("operator", operator);
 
     return requestBody;
   }
@@ -38,22 +36,21 @@ public class ContactUnblockFlowsIT {
   @Test
   @DisplayName("Should unblock Flows successfully")
   public void unblockFlows_success() {
-    // Arrange - First block some Flows
+    // Arrange
     String contactId = randomNumeric(10);
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> blockRequestBody = new HashMap<>();
     blockRequestBody.put("contact", contactId);
     blockRequestBody.put("blockFlows", new String[] {Flow_1, Flow_2});
     blockRequestBody.put("reason", randomAlphanumeric(10));
-    blockRequestBody.put("operator", randomAlphanumeric(10));
     blockRequestBody.put("unblockedAt", unblockedAt);
 
     Response blockResponse = blockContactFlows(TENANT_ID, blockRequestBody);
     blockResponse.then().statusCode(HttpStatus.SC_OK);
 
-    // Arrange - Prepare unblock request
+    // Arrange
     Map<String, Object> unblockRequestBody =
-        generateUnblockRequestBody(contactId, new String[] {Flow_1}, randomAlphanumeric(10));
+        generateUnblockRequestBody(contactId, new String[] {Flow_1});
 
     // Act
     Response response = unblockContactFlows(TENANT_ID, unblockRequestBody);
@@ -74,13 +71,12 @@ public class ContactUnblockFlowsIT {
   @Test
   @DisplayName("Should unblock Flows successfully with email contact")
   public void unblockFlows_emailContact_success() {
-    // Arrange - First block some Flows
+    // Arrange
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> blockRequestBody = new HashMap<>();
     blockRequestBody.put("contact", EMAIL_CONTACT);
     blockRequestBody.put("blockFlows", new String[] {Flow_1});
     blockRequestBody.put("reason", randomAlphanumeric(10));
-    blockRequestBody.put("operator", randomAlphanumeric(10));
     blockRequestBody.put("unblockedAt", unblockedAt);
 
     Response blockResponse = blockContactFlows(TENANT_ID, blockRequestBody);
@@ -88,7 +84,7 @@ public class ContactUnblockFlowsIT {
 
     // Arrange - Prepare unblock request
     Map<String, Object> unblockRequestBody =
-        generateUnblockRequestBody(EMAIL_CONTACT, new String[] {Flow_1}, randomAlphanumeric(10));
+        generateUnblockRequestBody(EMAIL_CONTACT, new String[] {Flow_1});
 
     // Act
     Response response = unblockContactFlows(TENANT_ID, unblockRequestBody);
@@ -109,23 +105,21 @@ public class ContactUnblockFlowsIT {
   @Test
   @DisplayName("Should unblock all Flows successfully")
   public void unblockFlows_allFlows_success() {
-    // Arrange - First block some Flows
+    // Arrange
     String contactId = randomNumeric(10);
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> blockRequestBody = new HashMap<>();
     blockRequestBody.put("contact", contactId);
     blockRequestBody.put("blockFlows", new String[] {Flow_1, Flow_2});
     blockRequestBody.put("reason", randomAlphanumeric(10));
-    blockRequestBody.put("operator", randomAlphanumeric(10));
     blockRequestBody.put("unblockedAt", unblockedAt);
 
     Response blockResponse = blockContactFlows(TENANT_ID, blockRequestBody);
     blockResponse.then().statusCode(HttpStatus.SC_OK);
 
-    // Arrange - Prepare unblock request for all Flows
+    // Arrange
     Map<String, Object> unblockRequestBody =
-        generateUnblockRequestBody(
-            contactId, new String[] {Flow_1, Flow_2}, randomAlphanumeric(10));
+        generateUnblockRequestBody(contactId, new String[] {Flow_1, Flow_2});
 
     // Act
     Response response = unblockContactFlows(TENANT_ID, unblockRequestBody);
@@ -147,10 +141,10 @@ public class ContactUnblockFlowsIT {
   @Test
   @DisplayName("Should handle unblocking non-blocked Flows gracefully")
   public void unblockFlows_nonBlockedFlows_success() {
-    // Arrange - Prepare unblock request for Flows that were never blocked
+    // Arrange
     String contactId = randomNumeric(10);
     Map<String, Object> unblockRequestBody =
-        generateUnblockRequestBody(contactId, new String[] {Flow_1}, randomAlphanumeric(10));
+        generateUnblockRequestBody(contactId, new String[] {Flow_1});
 
     // Act
     Response response = unblockContactFlows(TENANT_ID, unblockRequestBody);
@@ -174,7 +168,6 @@ public class ContactUnblockFlowsIT {
     // Arrange
     Map<String, Object> requestBody = new HashMap<>();
     requestBody.put("unblockFlows", new String[] {Flow_1});
-    requestBody.put("operator", randomAlphanumeric(10));
 
     // Act
     Response response = unblockContactFlows(TENANT_ID, requestBody);
@@ -192,8 +185,7 @@ public class ContactUnblockFlowsIT {
   @DisplayName("Should return error for empty contact")
   public void unblockFlows_emptyContact() {
     // Arrange
-    Map<String, Object> requestBody =
-        generateUnblockRequestBody("", new String[] {Flow_1}, randomAlphanumeric(10));
+    Map<String, Object> requestBody = generateUnblockRequestBody("", new String[] {Flow_1});
 
     // Act
     Response response = unblockContactFlows(TENANT_ID, requestBody);
@@ -214,7 +206,6 @@ public class ContactUnblockFlowsIT {
     String contactId = randomNumeric(10);
     Map<String, Object> requestBody = new HashMap<>();
     requestBody.put("contact", contactId);
-    requestBody.put("operator", randomAlphanumeric(10));
 
     // Act
     Response response = unblockContactFlows(TENANT_ID, requestBody);
@@ -230,11 +221,10 @@ public class ContactUnblockFlowsIT {
 
   @Test
   @DisplayName("Should return error for empty unblockFlows array")
-  public void unblockFlows_emptyunblockFlows() {
+  public void unblockFlows_emptyUnblockFlows() {
     // Arrange
     String contactId = randomNumeric(10);
-    Map<String, Object> requestBody =
-        generateUnblockRequestBody(contactId, new String[] {}, randomAlphanumeric(10));
+    Map<String, Object> requestBody = generateUnblockRequestBody(contactId, new String[] {});
 
     // Act
     Response response = unblockContactFlows(TENANT_ID, requestBody);
@@ -249,53 +239,11 @@ public class ContactUnblockFlowsIT {
   }
 
   @Test
-  @DisplayName("Should return error for missing operator")
-  public void unblockFlows_missingOperator() {
-    // Arrange
-    String contactId = randomNumeric(10);
-    Map<String, Object> requestBody = new HashMap<>();
-    requestBody.put("contact", contactId);
-    requestBody.put("unblockFlows", new String[] {Flow_1});
-
-    // Act
-    Response response = unblockContactFlows(TENANT_ID, requestBody);
-
-    // Assert
-    response
-        .then()
-        .statusCode(HttpStatus.SC_BAD_REQUEST)
-        .rootPath("error")
-        .body("code", equalTo("invalid_request"))
-        .body("message", equalTo("Operator is required"));
-  }
-
-  @Test
-  @DisplayName("Should return error for empty operator")
-  public void unblockFlows_emptyOperator() {
-    // Arrange
-    String contactId = randomNumeric(10);
-    Map<String, Object> requestBody =
-        generateUnblockRequestBody(contactId, new String[] {Flow_1}, "");
-
-    // Act
-    Response response = unblockContactFlows(TENANT_ID, requestBody);
-
-    // Assert
-    response
-        .then()
-        .statusCode(HttpStatus.SC_BAD_REQUEST)
-        .rootPath("error")
-        .body("code", equalTo("invalid_request"))
-        .body("message", equalTo("Operator is required"));
-  }
-
-  @Test
   @DisplayName("Should return error for unknown tenant")
   public void unblockFlows_unknownTenant() {
     // Arrange
     String contactId = randomNumeric(10);
-    Map<String, Object> requestBody =
-        generateUnblockRequestBody(contactId, new String[] {Flow_1}, randomAlphanumeric(10));
+    Map<String, Object> requestBody = generateUnblockRequestBody(contactId, new String[] {Flow_1});
 
     // Act
     Response response = unblockContactFlows(randomAlphanumeric(8), requestBody);
@@ -317,7 +265,6 @@ public class ContactUnblockFlowsIT {
     Map<String, Object> requestBody = new HashMap<>();
     requestBody.put("contact", contactId);
     requestBody.put("unblockFlows", null);
-    requestBody.put("operator", randomAlphanumeric(10));
 
     // Act
     Response response = unblockContactFlows(TENANT_ID, requestBody);
@@ -332,35 +279,12 @@ public class ContactUnblockFlowsIT {
   }
 
   @Test
-  @DisplayName("Should return error for null operator")
-  public void unblockFlows_nullOperator() {
-    // Arrange
-    String contactId = randomNumeric(10);
-    Map<String, Object> requestBody = new HashMap<>();
-    requestBody.put("contact", contactId);
-    requestBody.put("unblockFlows", new String[] {Flow_1});
-    requestBody.put("operator", null);
-
-    // Act
-    Response response = unblockContactFlows(TENANT_ID, requestBody);
-
-    // Assert
-    response
-        .then()
-        .statusCode(HttpStatus.SC_BAD_REQUEST)
-        .rootPath("error")
-        .body("code", equalTo("invalid_request"))
-        .body("message", equalTo("Operator is required"));
-  }
-
-  @Test
   @DisplayName("Should return error for null contact")
   public void unblockFlows_nullContact() {
     // Arrange
     Map<String, Object> requestBody = new HashMap<>();
     requestBody.put("contact", null);
     requestBody.put("unblockFlows", new String[] {Flow_1});
-    requestBody.put("operator", randomAlphanumeric(10));
 
     // Act
     Response response = unblockContactFlows(TENANT_ID, requestBody);
@@ -382,7 +306,6 @@ public class ContactUnblockFlowsIT {
     Map<String, Object> requestBody = new HashMap<>();
     requestBody.put("contact", contactId);
     requestBody.put("unblockFlows", new String[] {Flow_1});
-    requestBody.put("operator", randomAlphanumeric(10));
 
     // Act
     Response response1 = unblockContactFlows(TENANT_ID, requestBody);
