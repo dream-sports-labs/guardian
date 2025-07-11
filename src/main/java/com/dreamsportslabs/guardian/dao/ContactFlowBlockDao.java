@@ -1,5 +1,6 @@
 package com.dreamsportslabs.guardian.dao;
 
+import static com.dreamsportslabs.guardian.constant.Constants.MILLIS_TO_SECONDS;
 import static com.dreamsportslabs.guardian.dao.query.ContactFlowBlockSql.GET_ACTIVE_FLOW_BLOCKS_BY_CONTACT;
 import static com.dreamsportslabs.guardian.dao.query.ContactFlowBlockSql.UNBLOCK_CONTACT_FLOW;
 import static com.dreamsportslabs.guardian.dao.query.ContactFlowBlockSql.UPSERT_CONTACT_FLOW_BLOCK;
@@ -17,6 +18,7 @@ import io.vertx.rxjava3.redis.client.Command;
 import io.vertx.rxjava3.redis.client.Redis;
 import io.vertx.rxjava3.redis.client.Request;
 import io.vertx.rxjava3.sqlclient.Tuple;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +39,7 @@ public class ContactFlowBlockDao {
   }
 
   private int computeTTLSeconds(long unblockedAtEpochSeconds) {
-    long nowSeconds = System.currentTimeMillis() / 1000;
+    long nowSeconds = System.currentTimeMillis() / MILLIS_TO_SECONDS;
     long ttl = unblockedAtEpochSeconds - nowSeconds;
     return (int) Math.max(ttl, 1);
   }
@@ -70,28 +72,27 @@ public class ContactFlowBlockDao {
   }
 
   private Completable cacheBlockedFlowsInRedis(List<ContactFlowBlockModel> models) {
-    List<Completable> redisSets =
-        models.stream()
-            .map(
-                model -> {
-                  String key =
-                      buildRedisKey(model.getTenantId(), model.getContact(), model.getFlowName());
-                  int ttl = computeTTLSeconds(model.getUnblockedAt());
+    List<Request> requests = new ArrayList<>();
 
-                  String json;
-                  try {
-                    json = objectMapper.writeValueAsString(model);
-                  } catch (JsonProcessingException e) {
-                    return Completable.error(e);
-                  }
+    for (ContactFlowBlockModel model : models) {
+      try {
+        String key = buildRedisKey(model.getTenantId(), model.getContact(), model.getFlowName());
+        String json = objectMapper.writeValueAsString(model);
+        int ttl = computeTTLSeconds(model.getUnblockedAt());
 
-                  return redisClient
-                      .rxSend(Request.cmd(Command.SET).arg(key).arg(json).arg("EX").arg(ttl))
-                      .ignoreElement();
-                })
-            .collect(Collectors.toList());
+        Request request = Request.cmd(Command.SET).arg(key).arg(json).arg("EX").arg(ttl);
+        requests.add(request);
 
-    return Completable.merge(redisSets);
+      } catch (JsonProcessingException e) {
+        log.warn("Skipping model due to serialization error: {}", model, e);
+      }
+    }
+
+    if (requests.isEmpty()) {
+      return Completable.complete();
+    }
+
+    return redisClient.batch(requests).ignoreElement();
   }
 
   public Completable unblockFlows(String tenantId, String contact, List<String> flowNames) {

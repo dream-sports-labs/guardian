@@ -63,20 +63,18 @@ public class ContactFlowBlockService {
   }
 
   public Single<Boolean> isApiBlocked(String tenantId, String contact, String apiPath) {
+    String flowName = getFlowNameForApiPath(apiPath);
+    if (flowName == null) {
+      return Single.just(false);
+    }
+    return contactFlowBlockDao.isFlowBlocked(tenantId, contact, flowName);
+  }
 
-    List<Single<Boolean>> flowChecks =
-        BlockFlow.getAllFlowNames().stream()
-            .map(
-                flowName -> {
-                  BlockFlow flow = BlockFlow.fromString(flowName);
-                  if (flow.getApiPaths().contains(apiPath)) {
-                    return contactFlowBlockDao.isFlowBlocked(tenantId, contact, flowName);
-                  }
-                  return Single.just(false);
-                })
-            .collect(Collectors.toList());
-
-    return Single.merge(flowChecks).reduce(false, (blocked, isBlocked) -> blocked || isBlocked);
+  private String getFlowNameForApiPath(String apiPath) {
+    return BlockFlow.getAllFlowNames().stream()
+        .filter(flowName -> BlockFlow.fromString(flowName).getApiPaths().contains(apiPath))
+        .findFirst()
+        .orElse(null);
   }
 
   private boolean isBlockActive(ContactFlowBlockModel block) {
