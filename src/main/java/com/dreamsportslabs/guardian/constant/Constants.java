@@ -55,6 +55,7 @@ public final class Constants {
   public static final String JWT_CLAIMS_IAT = "iat";
   public static final String JWT_CLAIMS_EXP = "exp";
   public static final String JWT_CLAIMS_RFT_ID = "rft_id";
+  public static final String JWT_CLAIMS_AUD = "aud";
 
   public static final ImmutableList<String> fbAuthResponseTypes = ImmutableList.of(CODE, TOKEN);
   public static final ImmutableList<String> passwordlessAuthResponseTypes =
@@ -112,4 +113,8 @@ public final class Constants {
   public static final String FORMAT_PEM = "PEM";
   public static final String FORMAT_JWKS = "JWKS";
   public static final ImmutableList<Integer> VALID_KEY_SIZES = ImmutableList.of(2048, 3072, 4096);
+
+  // OIDC Token Constants
+  public static final String OIDC_REFRESH_TOKEN = "refresh_token";
+  public static final String AUTHORIZATION = "Authorization";
 }

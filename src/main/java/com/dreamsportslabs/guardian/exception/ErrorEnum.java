@@ -25,7 +25,15 @@ public enum ErrorEnum {
   RETRIES_EXHAUSTED("retries_exhausted", "Retries exhausted", 400),
 
   USER_EXISTS("user_exists", "User already exists", 400),
-  USER_NOT_EXISTS("user_not_exists", "User does not exist", 400);
+  USER_NOT_EXISTS("user_not_exists", "User does not exist", 400),
+
+  PROVIDER_NOT_FOUND("provider_not_found", "Specified provider not found", 400),
+  INVALID_IDP_TOKEN("invalid_idp_token", "Invalid identity provider token", 401),
+  INVALID_IDP_CODE("invalid_idp_code", "Invalid identity provider authorization code", 400),
+  INVALID_USER_IDENTIFIER(
+      "invalid_user_identifier",
+      "No valid user identifier found from the identifier provided",
+      400);
 
   private final String code;
   private final String message;
