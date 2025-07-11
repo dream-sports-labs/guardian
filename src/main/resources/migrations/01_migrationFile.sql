@@ -222,3 +222,26 @@ CREATE TABLE contact_verify_config
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE TABLE contact_flow_blocks
+(
+    tenant_id    CHAR(10)     NOT NULL,
+    contact      VARCHAR(64)  NOT NULL,
+    flow_name    CHAR(20)  NOT NULL,
+    reason       VARCHAR(500),
+    unblocked_at BIGINT,
+    is_active    BOOLEAN      NOT NULL DEFAULT TRUE,
+    created_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_tenant_contact_flow_blocks FOREIGN KEY (tenant_id)
+        REFERENCES tenant (id) ON DELETE CASCADE,
+
+    CONSTRAINT uk_tenant_contact_flow_active UNIQUE (tenant_id, contact, flow_name),
+
+    KEY `idx_contact_flow_blocks_tenant_contact` (`tenant_id`, `contact`, `is_active`),
+    KEY `idx_contact_flow_blocks_tenant_contact_flow` (`tenant_id`, `contact`, `flow_name`, `is_active`)
+
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci;
