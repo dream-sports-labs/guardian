@@ -79,11 +79,6 @@ public final class Constants {
   public static final String USER_FILTERS_PHONE = "phoneNumber";
   public static final String USER_FILTERS_PROVIDER_NAME = "providerName";
   public static final String USER_FILTERS_PROVIDER_USER_ID = "providerId";
-  public static final String EMAIL = "email";
-  public static final String PHONE = "phoneNumber";
-  public static final String GIVEN_NAME = "given_name";
-  public static final String FAMILY_NAME = "family_name";
-  public static final String NAME = "name";
 
   public static final String CACHE_KEY_CODE = "CODE";
   public static final String CACHE_KEY_STATE = "STATE";
@@ -120,8 +115,6 @@ public final class Constants {
   public static final ImmutableList<Integer> VALID_KEY_SIZES = ImmutableList.of(2048, 3072, 4096);
 
   // OIDC Token Constants
-  public static final String OIDC_ACCESS_TOKEN = "access_token";
   public static final String OIDC_REFRESH_TOKEN = "refresh_token";
-  public static final String OIDC_ID_TOKEN = "id_token";
   public static final String AUTHORIZATION = "Authorization";
 }

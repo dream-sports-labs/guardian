@@ -3,13 +3,16 @@ package com.dreamsportslabs.guardian.dto.request;
 import static com.dreamsportslabs.guardian.exception.ErrorEnum.INVALID_REQUEST;
 
 import com.dreamsportslabs.guardian.constant.Flow;
+import com.dreamsportslabs.guardian.constant.ResponseType;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
-@Getter
-@Setter
+@Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -18,7 +21,7 @@ import org.apache.commons.lang3.StringUtils;
 public class IdpConnectRequestDto {
   private String idProvider;
   private String identifier;
-  private String responseType;
+  private ResponseType responseType;
   private String nonce;
   private String codeVerifier;
   private Flow flow;
@@ -33,12 +36,8 @@ public class IdpConnectRequestDto {
       throw INVALID_REQUEST.getCustomException("identifier is required");
     }
 
-    if (StringUtils.isBlank(responseType)) {
-      throw INVALID_REQUEST.getCustomException("responseType is required");
-    }
-
-    if (!"token".equals(responseType) && !"code".equals(responseType)) {
-      throw INVALID_REQUEST.getCustomException("responseType must be 'token' or 'code'");
+    if (responseType == null) {
+      throw INVALID_REQUEST.getCustomException("Invalid response type");
     }
 
     if (flow == null) {

@@ -1,11 +1,31 @@
 package com.dreamsportslabs.guardian.service;
 
-import static com.dreamsportslabs.guardian.constant.Constants.*;
-import static com.dreamsportslabs.guardian.exception.ErrorEnum.*;
+import static com.dreamsportslabs.guardian.constant.Constants.AUTHORIZATION;
+import static com.dreamsportslabs.guardian.constant.Constants.CODE;
+import static com.dreamsportslabs.guardian.constant.Constants.JWT_CLAIMS_AUD;
+import static com.dreamsportslabs.guardian.constant.Constants.JWT_CLAIMS_EXP;
+import static com.dreamsportslabs.guardian.constant.Constants.JWT_CLAIMS_ISS;
+import static com.dreamsportslabs.guardian.constant.Constants.JWT_CLAIMS_SUB;
+import static com.dreamsportslabs.guardian.constant.Constants.OIDC_CLAIMS_EMAIL;
+import static com.dreamsportslabs.guardian.constant.Constants.OIDC_CLAIMS_FAMILY_NAME;
+import static com.dreamsportslabs.guardian.constant.Constants.OIDC_CLAIMS_FULL_NAME;
+import static com.dreamsportslabs.guardian.constant.Constants.OIDC_CLAIMS_GIVEN_NAME;
+import static com.dreamsportslabs.guardian.constant.Constants.OIDC_REFRESH_TOKEN;
+import static com.dreamsportslabs.guardian.constant.Constants.OIDC_TOKENS_ACCESS_TOKEN;
+import static com.dreamsportslabs.guardian.constant.Constants.OIDC_TOKENS_ID_TOKEN;
+import static com.dreamsportslabs.guardian.constant.Constants.PROVIDER;
+import static com.dreamsportslabs.guardian.constant.Constants.TOKEN;
+import static com.dreamsportslabs.guardian.constant.Constants.USERID;
+import static com.dreamsportslabs.guardian.constant.Constants.USER_FILTERS_PHONE;
+import static com.dreamsportslabs.guardian.exception.ErrorEnum.INTERNAL_SERVER_ERROR;
+import static com.dreamsportslabs.guardian.exception.ErrorEnum.INVALID_IDP_CODE;
+import static com.dreamsportslabs.guardian.exception.ErrorEnum.INVALID_IDP_TOKEN;
+import static com.dreamsportslabs.guardian.exception.ErrorEnum.USER_EXISTS;
+import static com.dreamsportslabs.guardian.exception.ErrorEnum.USER_NOT_EXISTS;
 
 import com.dreamsportslabs.guardian.config.tenant.OidcProviderConfig;
 import com.dreamsportslabs.guardian.constant.Flow;
-import com.dreamsportslabs.guardian.dao.OidcProviderDao;
+import com.dreamsportslabs.guardian.dao.IdpConnectDao;
 import com.dreamsportslabs.guardian.dao.model.IdpCredentialsModel;
 import com.dreamsportslabs.guardian.dto.Provider;
 import com.dreamsportslabs.guardian.dto.UserDto;
@@ -17,7 +37,6 @@ import com.dreamsportslabs.guardian.utils.Utils;
 import com.google.inject.Inject;
 import io.fusionauth.jwks.JSONWebKeySetHelper;
 import io.fusionauth.jwks.domain.JSONWebKey;
-import io.fusionauth.jwt.JWTDecoder;
 import io.fusionauth.jwt.JWTUtils;
 import io.fusionauth.jwt.domain.JWT;
 import io.fusionauth.jwt.rsa.RSAVerifier;
@@ -42,16 +61,15 @@ import org.apache.commons.lang3.StringUtils;
 
 @Slf4j
 @RequiredArgsConstructor(onConstructor = @__({@Inject}))
-public class OidcService {
-  private final OidcProviderDao oidcProviderDao;
+public class IdpConnectService {
+  private final IdpConnectDao idpConnectDao;
   private final UserService userService;
   private final AuthorizationService authorizationService;
   private final WebClient webClient;
-  private final JWTDecoder jwtDecoder = JWT.getDecoder();
 
   public Single<IdpConnectResponseDto> connect(
       IdpConnectRequestDto requestDto, MultivaluedMap<String, String> headers, String tenantId) {
-    return oidcProviderDao
+    return idpConnectDao
         .getOidcProviderConfig(tenantId, requestDto.getIdProvider())
         .flatMap(
             providerConfig -> {
@@ -151,13 +169,16 @@ public class OidcService {
     try {
       Map<String, Object> claims = JWTUtils.decodePayload(idToken).getAllClaims();
       UserDto.UserDtoBuilder userDtoBuilder = UserDto.builder();
-      if (claims.containsKey(GIVEN_NAME))
-        userDtoBuilder.firstName(claims.get(GIVEN_NAME).toString());
-      if (claims.containsKey(FAMILY_NAME))
-        userDtoBuilder.lastName(claims.get(FAMILY_NAME).toString());
-      if (claims.containsKey(NAME)) userDtoBuilder.name(claims.get(NAME).toString());
-      if (claims.containsKey(EMAIL)) userDtoBuilder.email(claims.get(EMAIL).toString());
-      if (claims.containsKey(PHONE)) userDtoBuilder.phoneNumber(claims.get(PHONE).toString());
+      if (claims.containsKey(OIDC_CLAIMS_GIVEN_NAME))
+        userDtoBuilder.firstName(claims.get(OIDC_CLAIMS_GIVEN_NAME).toString());
+      if (claims.containsKey(OIDC_CLAIMS_FAMILY_NAME))
+        userDtoBuilder.lastName(claims.get(OIDC_CLAIMS_FAMILY_NAME).toString());
+      if (claims.containsKey(OIDC_CLAIMS_FULL_NAME))
+        userDtoBuilder.name(claims.get(OIDC_CLAIMS_FULL_NAME).toString());
+      if (claims.containsKey(OIDC_CLAIMS_EMAIL))
+        userDtoBuilder.email(claims.get(OIDC_CLAIMS_EMAIL).toString());
+      if (claims.containsKey(USER_FILTERS_PHONE))
+        userDtoBuilder.phoneNumber(claims.get(USER_FILTERS_PHONE).toString());
       userDtoBuilder.provider(providerDto);
       return userDtoBuilder.build();
     } catch (Exception e) {
@@ -266,9 +287,9 @@ public class OidcService {
       String userIdentifier, Map<String, String> queryParams, UserDto userDto, String idProvider) {
     boolean isUserIdentifierExists;
     switch (userIdentifier) {
-      case PHONE:
+      case USER_FILTERS_PHONE:
         isUserIdentifierExists = StringUtils.isNotBlank(userDto.getPhoneNumber());
-        queryParams.put(PHONE, userDto.getPhoneNumber());
+        queryParams.put(USER_FILTERS_PHONE, userDto.getPhoneNumber());
         break;
       case JWT_CLAIMS_SUB:
         isUserIdentifierExists = StringUtils.isNotBlank(userDto.getProvider().getProviderUserId());
@@ -277,7 +298,7 @@ public class OidcService {
         break;
       default:
         isUserIdentifierExists = StringUtils.isNotBlank(userDto.getEmail());
-        queryParams.put(EMAIL, userDto.getEmail());
+        queryParams.put(OIDC_CLAIMS_EMAIL, userDto.getEmail());
     }
     return !isUserIdentifierExists;
   }
@@ -290,7 +311,7 @@ public class OidcService {
     Boolean isNewUser = userJson.getBoolean("isNewUser", false);
     return loginUser(
         userJson.getString(USERID),
-        requestDto.getResponseType(),
+        requestDto.getResponseType().getResponseType(),
         requestDto.getMetaInfo(),
         tenantId,
         isNewUser);
@@ -358,11 +379,11 @@ public class OidcService {
             res -> {
               if (res.statusCode() == 200) {
                 JsonObject jsonBody = res.bodyAsJsonObject();
-                if (StringUtils.isNotBlank(jsonBody.getString(OIDC_ID_TOKEN))) {
+                if (StringUtils.isNotBlank(jsonBody.getString(OIDC_TOKENS_ID_TOKEN))) {
                   return IdpCredentialsModel.builder()
-                      .accessToken(jsonBody.getString(OIDC_ACCESS_TOKEN))
+                      .accessToken(jsonBody.getString(OIDC_TOKENS_ACCESS_TOKEN))
                       .refreshToken(jsonBody.getString(OIDC_REFRESH_TOKEN))
-                      .idToken(jsonBody.getString(OIDC_ID_TOKEN))
+                      .idToken(jsonBody.getString(OIDC_TOKENS_ID_TOKEN))
                       .build();
                 } else {
                   throw INVALID_IDP_CODE.getCustomException("Missing ID token in response");

@@ -16,7 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor(onConstructor = @__({@Inject}))
-public class OidcProviderDao {
+public class IdpConnectDao {
   private final MysqlClient mysqlClient;
 
   public Single<OidcProviderConfig> getOidcProviderConfig(String tenantId, String providerName) {

@@ -31,7 +31,9 @@ public enum ErrorEnum {
   INVALID_IDP_TOKEN("invalid_idp_token", "Invalid identity provider token", 401),
   INVALID_IDP_CODE("invalid_idp_code", "Invalid identity provider authorization code", 400),
   INVALID_USER_IDENTIFIER(
-      "invalid_user_identifier", "Invalid userIdentifier in the request DTO", 400);
+      "invalid_user_identifier",
+      "No valid user identifier found from the identifier provided",
+      400);
 
   private final String code;
   private final String message;
