@@ -38,8 +38,9 @@ public class ContactBlockFlowsIT {
       randomAlphanumeric(10) + "@" + randomAlphanumeric(5) + ".com";
   private static final String PASSWORDLESS_FLOW = "passwordless";
   private static final String SOCIAL_AUTH_FLOW = "social_auth";
+  private static final String OTP_VERIFY_FLOW = "otp_verify";
+  private static final String PASSWORD_FLOW = "password";
 
-  /** Common function to generate request body for block Flow */
   private Map<String, Object> generateBlockRequestBody(
       String contact, String[] blockFlows, String reason, Long unblockedAt) {
     Map<String, Object> requestBody = new HashMap<>();
@@ -51,7 +52,6 @@ public class ContactBlockFlowsIT {
     return requestBody;
   }
 
-  /** Common function to generate passwordless init request body */
   private Map<String, Object> generatePasswordlessInitRequestBody(String email) {
     Map<String, Object> requestBody = new HashMap<>();
     requestBody.put("flow", PASSWORDLESS_FLOW_SIGNINUP);
@@ -70,7 +70,6 @@ public class ContactBlockFlowsIT {
     return requestBody;
   }
 
-  /** Helper method to create OTP send request body */
   private Map<String, Object> createSendOtpBody(String email) {
     Map<String, Object> requestBody = new HashMap<>();
     Map<String, Object> contact = new HashMap<>();
@@ -81,7 +80,6 @@ public class ContactBlockFlowsIT {
     return requestBody;
   }
 
-  /** Helper method to create OTP verify request body */
   private Map<String, Object> createVerifyOtpBody(String state, String otp) {
     Map<String, Object> requestBody = new HashMap<>();
     requestBody.put("state", state);
@@ -416,7 +414,6 @@ public class ContactBlockFlowsIT {
     Map<String, Object> requestBody = new HashMap<>();
     requestBody.put("contact", contactId);
     requestBody.put("blockFlows", new String[] {PASSWORDLESS_FLOW});
-    requestBody.put("reason", null);
     requestBody.put("unblockedAt", unblockedAt);
 
     // Act
@@ -458,11 +455,11 @@ public class ContactBlockFlowsIT {
   @DisplayName("Should verify passwordless flow is blocked after blocking")
   public void verifyPasswordlessFlowBlocked() {
     // Arrange
-    String contactId = randomNumeric(10);
+    String contactId = randomAlphanumeric(10) + "@" + randomAlphanumeric(5) + ".com";
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
+    String reason = randomAlphanumeric(10);
     Map<String, Object> requestBody =
-        generateBlockRequestBody(
-            contactId, new String[] {PASSWORDLESS_FLOW}, randomAlphanumeric(10), unblockedAt);
+        generateBlockRequestBody(contactId, new String[] {PASSWORDLESS_FLOW}, reason, unblockedAt);
 
     // Act
     Response blockResponse = blockContactFlows(TENANT_ID, requestBody);
@@ -484,7 +481,7 @@ public class ContactBlockFlowsIT {
         .statusCode(HttpStatus.SC_FORBIDDEN)
         .rootPath(ERROR)
         .body("code", equalTo(ERROR_FLOW_BLOCKED))
-        .body("message", equalTo("Passwordless flow is blocked for this contact"));
+        .body("message", equalTo(reason));
   }
 
   // TODO: implement the social auth flow blocking test for both facebook and google
@@ -492,12 +489,12 @@ public class ContactBlockFlowsIT {
   @Test
   @DisplayName("Should verify OTP verify flow is blocked after blocking")
   public void verifyOtpVerifyFlowBlocked() {
-    // Arrange - Block OTP verify flow for a test email
+    // Arrange
     String testEmail = randomAlphanumeric(10) + "@" + randomAlphanumeric(5) + ".com";
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
+    String reason = randomAlphanumeric(10);
     Map<String, Object> blockRequestBody =
-        generateBlockRequestBody(
-            testEmail, new String[] {"otp_verify"}, randomAlphanumeric(10), unblockedAt);
+        generateBlockRequestBody(testEmail, new String[] {OTP_VERIFY_FLOW}, reason, unblockedAt);
 
     Response blockResponse = blockContactFlows(TENANT_ID, blockRequestBody);
     blockResponse.then().statusCode(HttpStatus.SC_OK);
@@ -507,17 +504,17 @@ public class ContactBlockFlowsIT {
         blockResponse.getBody().jsonPath().getString("message"),
         equalTo("Flows blocked successfully"));
 
-    // Act - Try to hit OTP send API
+    // Act
     Map<String, Object> sendOtpBody = createSendOtpBody(testEmail);
     Response sendOtpResponse = sendOtp(TENANT_ID, sendOtpBody);
 
-    // Verify - The response should indicate that the flow is blocked
+    // Verify
     sendOtpResponse
         .then()
         .statusCode(HttpStatus.SC_FORBIDDEN)
         .rootPath(ERROR)
         .body("code", equalTo(ERROR_FLOW_BLOCKED))
-        .body("message", equalTo("OTP verify flow is blocked for this contact"));
+        .body("message", equalTo(reason));
   }
 
   @Test
@@ -532,9 +529,9 @@ public class ContactBlockFlowsIT {
       String state = sendOtpResponse.getBody().jsonPath().getString("state");
 
       Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
+      String reason = randomAlphanumeric(10);
       Map<String, Object> blockRequestBody =
-          generateBlockRequestBody(
-              testEmail, new String[] {"otp_verify"}, randomAlphanumeric(10), unblockedAt);
+          generateBlockRequestBody(testEmail, new String[] {OTP_VERIFY_FLOW}, reason, unblockedAt);
 
       Response blockResponse = blockContactFlows(TENANT_ID, blockRequestBody);
       blockResponse.then().statusCode(HttpStatus.SC_OK);
@@ -549,7 +546,7 @@ public class ContactBlockFlowsIT {
           .statusCode(HttpStatus.SC_FORBIDDEN)
           .rootPath(ERROR)
           .body("code", equalTo(ERROR_FLOW_BLOCKED))
-          .body("message", equalTo("OTP verify flow is blocked for this contact"));
+          .body("message", equalTo(reason));
     }
   }
 
@@ -560,9 +557,9 @@ public class ContactBlockFlowsIT {
     String username = randomAlphanumeric(10);
     String password = "password@123";
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
+    String reason = randomAlphanumeric(10);
     Map<String, Object> requestBody =
-        generateBlockRequestBody(
-            username, new String[] {"password"}, randomAlphanumeric(10), unblockedAt);
+        generateBlockRequestBody(username, new String[] {PASSWORD_FLOW}, reason, unblockedAt);
 
     // Act
     Response blockResponse = blockContactFlows(TENANT_ID, requestBody);
@@ -583,7 +580,7 @@ public class ContactBlockFlowsIT {
         .statusCode(HttpStatus.SC_FORBIDDEN)
         .rootPath(ERROR)
         .body("code", equalTo(ERROR_FLOW_BLOCKED))
-        .body("message", equalTo("Password signin flow is blocked for this contact"));
+        .body("message", equalTo(reason));
   }
 
   @Test
@@ -593,9 +590,9 @@ public class ContactBlockFlowsIT {
     String username = randomAlphanumeric(10);
     String password = "password@123";
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
+    String reason = randomAlphanumeric(10);
     Map<String, Object> requestBody =
-        generateBlockRequestBody(
-            username, new String[] {"password"}, randomAlphanumeric(10), unblockedAt);
+        generateBlockRequestBody(username, new String[] {PASSWORD_FLOW}, reason, unblockedAt);
 
     // Act
     Response blockResponse = blockContactFlows(TENANT_ID, requestBody);
@@ -616,6 +613,6 @@ public class ContactBlockFlowsIT {
         .statusCode(HttpStatus.SC_FORBIDDEN)
         .rootPath(ERROR)
         .body("code", equalTo(ERROR_FLOW_BLOCKED))
-        .body("message", equalTo("Password signup flow is blocked for this contact"));
+        .body("message", equalTo(reason));
   }
 }

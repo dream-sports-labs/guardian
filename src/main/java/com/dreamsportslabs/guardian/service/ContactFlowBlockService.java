@@ -12,6 +12,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -61,12 +62,15 @@ public class ContactFlowBlockService {
                 blocksList.stream().filter(this::isBlockActive).collect(Collectors.toList()));
   }
 
-  public Single<Boolean> isApiBlocked(String tenantId, String contact, String apiPath) {
+  public Single<ApiBlockCheckResult> checkApiBlockedWithReason(
+      String tenantId, String contact, String apiPath) {
     String flowName = getFlowNameForApiPath(apiPath);
     if (flowName == null) {
-      return Single.just(false);
+      return Single.just(new ApiBlockCheckResult(false, null));
     }
-    return contactFlowBlockDao.isFlowBlocked(tenantId, contact, flowName);
+    return contactFlowBlockDao
+        .checkFlowBlockedWithReason(tenantId, contact, flowName)
+        .map(result -> new ApiBlockCheckResult(result.isBlocked(), result.getReason()));
   }
 
   private String getFlowNameForApiPath(String apiPath) {
@@ -79,5 +83,16 @@ public class ContactFlowBlockService {
   private boolean isBlockActive(ContactFlowBlockModel block) {
     long currentTimestamp = System.currentTimeMillis() / MILLIS_TO_SECONDS;
     return currentTimestamp < block.getUnblockedAt();
+  }
+
+  @Getter
+  public static class ApiBlockCheckResult {
+    private final boolean blocked;
+    private final String reason;
+
+    public ApiBlockCheckResult(boolean blocked, String reason) {
+      this.blocked = blocked;
+      this.reason = reason;
+    }
   }
 }

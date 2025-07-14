@@ -223,7 +223,7 @@ CREATE TABLE contact_verify_config
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci;
 
-CREATE TABLE contact_flow_blocks
+CREATE TABLE contact_flow_blocks_config
 (
     tenant_id    CHAR(10)     NOT NULL,
     contact      VARCHAR(64)  NOT NULL,
@@ -234,7 +234,7 @@ CREATE TABLE contact_flow_blocks
     created_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
-    CONSTRAINT fk_tenant_contact_flow_blocks FOREIGN KEY (tenant_id)
+    CONSTRAINT fk_tenant_contact_flow_blocks_config FOREIGN KEY (tenant_id)
         REFERENCES tenant (id) ON DELETE CASCADE,
 
     CONSTRAINT uk_tenant_contact_flow_active UNIQUE (tenant_id, contact, flow_name),

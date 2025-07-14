@@ -37,81 +37,71 @@ public class ContactVerifyService {
 
   public Single<OtpGenerateModel> initOtp(
       V1SendOtpRequestDto requestDto, MultivaluedMap<String, String> headers, String tenantId) {
-    // Check if OTP flow is blocked for the contact
+
     return getContactIdentifier(requestDto, tenantId)
         .flatMap(
             contactIdentifier ->
                 contactFlowBlockService
-                    .isApiBlocked(tenantId, contactIdentifier, "/v1/otp/send")
+                    .checkApiBlockedWithReason(tenantId, contactIdentifier, "/v1/otp/send")
                     .flatMap(
-                        isBlocked -> {
-                          if (isBlocked) {
+                        result -> {
+                          if (result.isBlocked()) {
                             log.warn(
-                                "OTP send API is blocked for contact: {} in tenant: {}",
+                                "OTP send API is blocked for contact: {} in tenant: {} with reason: {}",
                                 contactIdentifier,
-                                tenantId);
+                                tenantId,
+                                result.getReason());
                             return Single.error(
-                                FLOW_BLOCKED.getCustomException(
-                                    "OTP verify flow is blocked for this contact"));
+                                FLOW_BLOCKED.getCustomException(result.getReason()));
                           }
                           return Single.just(requestDto);
-                        })
-                    .flatMap(
-                        dto -> {
-                          String state = dto.getState();
-                          Single<OtpGenerateModel> otpGenerateModel;
+                        }))
+        .flatMap(
+            dto -> {
+              String state = dto.getState();
+              Single<OtpGenerateModel> otpGenerateModel;
 
-                          if (state != null) {
-                            otpGenerateModel = this.getOtpGenerateModel(tenantId, state);
-                          } else {
-                            state = OtpUtils.generateState();
-                            TenantConfig tenantConfig = registry.get(tenantId, TenantConfig.class);
+              if (state != null) {
+                otpGenerateModel = this.getOtpGenerateModel(tenantId, state);
+              } else {
+                state = OtpUtils.generateState();
+                TenantConfig tenantConfig = registry.get(tenantId, TenantConfig.class);
 
-                            OtpUtils.updateContactTemplate(
-                                tenantConfig.getSmsConfig(),
-                                tenantConfig.getEmailConfig(),
-                                dto.getContact());
+                OtpUtils.updateContactTemplate(
+                    tenantConfig.getSmsConfig(), tenantConfig.getEmailConfig(), dto.getContact());
 
-                            otpGenerateModel =
-                                this.createOtpGenerateModel(dto, headers, tenantId, state);
-                          }
+                otpGenerateModel = this.createOtpGenerateModel(dto, headers, tenantId, state);
+              }
 
-                          return otpGenerateModel
-                              .map(
-                                  model -> {
-                                    if (model.getResends() >= model.getMaxResends()) {
-                                      contactVerifyDao.deleteOtpGenerateModel(
-                                          tenantId, model.getState());
-                                      throw RESENDS_EXHAUSTED.getException();
-                                    }
+              return otpGenerateModel
+                  .map(
+                      model -> {
+                        if (model.getResends() >= model.getMaxResends()) {
+                          contactVerifyDao.deleteOtpGenerateModel(tenantId, model.getState());
+                          throw RESENDS_EXHAUSTED.getException();
+                        }
 
-                                    if ((System.currentTimeMillis() / 1000)
-                                        < model.getResendAfter()) {
-                                      throw RESEND_NOT_ALLOWED.getCustomException(
-                                          Map.of("resendAfter", model.getResendAfter()));
-                                    }
+                        if ((System.currentTimeMillis() / 1000) < model.getResendAfter()) {
+                          throw RESEND_NOT_ALLOWED.getCustomException(
+                              Map.of("resendAfter", model.getResendAfter()));
+                        }
 
-                                    return model;
-                                  })
-                              .flatMap(
-                                  model -> {
-                                    if (Boolean.TRUE.equals(model.getIsOtpMocked())) {
-                                      return Single.just(model);
-                                    }
-                                    return otpService
-                                        .sendOtp(
-                                            List.of(model.getContact()),
-                                            model.getOtp(),
-                                            headers,
-                                            tenantId)
-                                        .andThen(Single.just(model));
-                                  })
-                              .map(OtpGenerateModel::updateResend)
-                              .flatMap(
-                                  model ->
-                                      contactVerifyDao.setOtpGenerateModel(
-                                          model, tenantId, model.getState()));
-                        }));
+                        return model;
+                      })
+                  .flatMap(
+                      model -> {
+                        if (Boolean.TRUE.equals(model.getIsOtpMocked())) {
+                          return Single.just(model);
+                        }
+                        return otpService
+                            .sendOtp(List.of(model.getContact()), model.getOtp(), headers, tenantId)
+                            .andThen(Single.just(model));
+                      })
+                  .map(OtpGenerateModel::updateResend)
+                  .flatMap(
+                      model ->
+                          contactVerifyDao.setOtpGenerateModel(model, tenantId, model.getState()));
+            });
   }
 
   private Single<String> getContactIdentifier(V1SendOtpRequestDto requestDto, String tenantId) {
@@ -158,20 +148,18 @@ public class ContactVerifyService {
     return getOtpGenerateModel(tenantId, state)
         .flatMap(
             model -> {
-              // Check if OTP flow is blocked for the contact
               String contactIdentifier = model.getContact().getIdentifier();
               return contactFlowBlockService
-                  .isApiBlocked(tenantId, contactIdentifier, "/v1/otp/verify")
+                  .checkApiBlockedWithReason(tenantId, contactIdentifier, "/v1/otp/verify")
                   .flatMap(
-                      isBlocked -> {
-                        if (isBlocked) {
+                      result -> {
+                        if (result.isBlocked()) {
                           log.warn(
-                              "OTP verify API is blocked for contact: {} in tenant: {}",
+                              "OTP verify API is blocked for contact: {} in tenant: {} with reason: {}",
                               contactIdentifier,
-                              tenantId);
-                          return Single.error(
-                              FLOW_BLOCKED.getCustomException(
-                                  "OTP verify flow is blocked for this contact"));
+                              tenantId,
+                              result.getReason());
+                          return Single.error(FLOW_BLOCKED.getCustomException(result.getReason()));
                         }
                         return Single.just(model);
                       })

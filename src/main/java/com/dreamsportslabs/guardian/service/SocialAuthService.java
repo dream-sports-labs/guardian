@@ -62,21 +62,20 @@ public class SocialAuthService {
         .getUserIdentity(dto.getAccessToken())
         .flatMap(
             fbUserData -> {
-              // Extract email from Facebook user data for blocking check
               String email = fbUserData.getString(FACEBOOK_FIELDS_EMAIL);
               if (email != null) {
                 return contactFlowBlockService
-                    .isApiBlocked(tenantId, email, "/v1/auth/fb")
+                    .checkApiBlockedWithReason(tenantId, email, "/v1/auth/fb")
                     .flatMap(
-                        isBlocked -> {
-                          if (isBlocked) {
+                        result -> {
+                          if (result.isBlocked()) {
                             log.warn(
-                                "Facebook auth API is blocked for email: {} in tenant: {}",
+                                "Facebook auth API is blocked for email: {} in tenant: {} with reason: {}",
                                 email,
-                                tenantId);
+                                tenantId,
+                                result.getReason());
                             return Single.error(
-                                FLOW_BLOCKED.getCustomException(
-                                    "Social auth flow is blocked for this contact"));
+                                FLOW_BLOCKED.getCustomException(result.getReason()));
                           }
                           return Single.just(fbUserData);
                         });
@@ -160,21 +159,20 @@ public class SocialAuthService {
         .getUserIdentity(dto.getIdToken())
         .flatMap(
             googleUserData -> {
-              // Extract email from Google user data for blocking check
               String email = googleUserData.getString(OIDC_CLAIMS_EMAIL);
               if (email != null) {
                 return contactFlowBlockService
-                    .isApiBlocked(tenantId, email, "/v1/auth/google")
+                    .checkApiBlockedWithReason(tenantId, email, "/v1/auth/google")
                     .flatMap(
-                        isBlocked -> {
-                          if (isBlocked) {
+                        result -> {
+                          if (result.isBlocked()) {
                             log.warn(
-                                "Google auth API is blocked for email: {} in tenant: {}",
+                                "Google auth API is blocked for email: {} in tenant: {} with reason: {}",
                                 email,
-                                tenantId);
+                                tenantId,
+                                result.getReason());
                             return Single.error(
-                                FLOW_BLOCKED.getCustomException(
-                                    "Social auth flow is blocked for this contact"));
+                                FLOW_BLOCKED.getCustomException(result.getReason()));
                           }
                           return Single.just(googleUserData);
                         });

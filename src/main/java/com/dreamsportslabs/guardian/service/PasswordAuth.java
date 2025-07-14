@@ -22,24 +22,22 @@ public class PasswordAuth {
 
   public Single<Object> signIn(
       V1SignInRequestDto dto, MultivaluedMap<String, String> headers, String tenantId) {
-    // Extract contact information from username
+
     List<String> contacts = contactExtractionService.extractContactsFromSignIn(dto);
 
-    // Check if password flow is blocked for any contact
     if (!contacts.isEmpty()) {
       String contact = contacts.get(0);
       return contactFlowBlockService
-          .isApiBlocked(tenantId, contact, "/v1/signin")
+          .checkApiBlockedWithReason(tenantId, contact, "/v1/signin")
           .flatMap(
-              isBlocked -> {
-                if (isBlocked) {
+              result -> {
+                if (result.isBlocked()) {
                   log.warn(
-                      "Password signin flow is blocked for contact: {} in tenant: {}",
+                      "Password signin flow is blocked for contact: {} in tenant: {} with reason: {}",
                       contact,
-                      tenantId);
-                  return Single.error(
-                      FLOW_BLOCKED.getCustomException(
-                          "Password signin flow is blocked for this contact"));
+                      tenantId,
+                      result.getReason());
+                  return Single.error(FLOW_BLOCKED.getCustomException(result.getReason()));
                 }
                 return performSignIn(dto, headers, tenantId);
               });
@@ -49,30 +47,27 @@ public class PasswordAuth {
 
   public Single<Object> signUp(
       V1SignUpRequestDto dto, MultivaluedMap<String, String> headers, String tenantId) {
-    // Extract contact information from username
+
     List<String> contacts = contactExtractionService.extractContactsFromSignUp(dto);
 
-    // Check if password flow is blocked for any contact
     if (!contacts.isEmpty()) {
-      String contact = contacts.get(0); // Take the first contact (username)
+      String contact = contacts.get(0);
       return contactFlowBlockService
-          .isApiBlocked(tenantId, contact, "/v1/signup")
+          .checkApiBlockedWithReason(tenantId, contact, "/v1/signup")
           .flatMap(
-              isBlocked -> {
-                if (isBlocked) {
+              result -> {
+                if (result.isBlocked()) {
                   log.warn(
-                      "Password signup flow is blocked for contact: {} in tenant: {}",
+                      "Password signup flow is blocked for contact: {} in tenant: {} with reason: {}",
                       contact,
-                      tenantId);
-                  return Single.error(
-                      FLOW_BLOCKED.getCustomException(
-                          "Password signup flow is blocked for this contact"));
+                      tenantId,
+                      result.getReason());
+                  return Single.error(FLOW_BLOCKED.getCustomException(result.getReason()));
                 }
                 return performSignUp(dto, headers, tenantId);
               });
     }
 
-    // If no valid contact found, proceed with registration
     return performSignUp(dto, headers, tenantId);
   }
 
