@@ -1,5 +1,6 @@
 package com.dreamsportslabs.guardian.dao;
 
+import static com.dreamsportslabs.guardian.dao.query.ConfigQuery.ADMIN_CONFIG;
 import static com.dreamsportslabs.guardian.dao.query.ConfigQuery.AUTH_CODE_CONFIG;
 import static com.dreamsportslabs.guardian.dao.query.ConfigQuery.CONTACT_VERIFY_CONFIG;
 import static com.dreamsportslabs.guardian.dao.query.ConfigQuery.EMAIL_CONFIG;
@@ -9,7 +10,6 @@ import static com.dreamsportslabs.guardian.dao.query.ConfigQuery.OTP_CONFIG;
 import static com.dreamsportslabs.guardian.dao.query.ConfigQuery.SMS_CONFIG;
 import static com.dreamsportslabs.guardian.dao.query.ConfigQuery.TOKEN_CONFIG;
 import static com.dreamsportslabs.guardian.dao.query.ConfigQuery.USER_CONFIG;
-import static com.dreamsportslabs.guardian.dao.query.ConfigQuery.ADMIN_CONFIG;
 import static com.dreamsportslabs.guardian.exception.ErrorEnum.INVALID_REQUEST;
 
 import com.dreamsportslabs.guardian.client.MysqlClient;

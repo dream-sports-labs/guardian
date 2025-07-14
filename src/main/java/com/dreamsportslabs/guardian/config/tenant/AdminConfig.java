@@ -6,4 +6,4 @@ import lombok.Data;
 public class AdminConfig {
   private String username;
   private String password;
-} 
+}

@@ -4,9 +4,9 @@ import static com.dreamsportslabs.guardian.constant.Constants.AUTHORIZATION;
 import static com.dreamsportslabs.guardian.constant.Constants.TENANT_ID;
 
 import com.dreamsportslabs.guardian.dto.request.V1AdminLogoutRequestDto;
+import com.dreamsportslabs.guardian.registry.Registry;
 import com.dreamsportslabs.guardian.service.AuthorizationService;
 import com.dreamsportslabs.guardian.utils.AdminUtils;
-import com.dreamsportslabs.guardian.registry.Registry;
 import com.google.inject.Inject;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.Consumes;
@@ -34,11 +34,11 @@ public class AdminLogout {
       @HeaderParam(TENANT_ID) String tenantId,
       @HeaderParam(AUTHORIZATION) String authorizationHeader,
       V1AdminLogoutRequestDto requestDto) {
-    
+
     requestDto.validate();
 
     AdminUtils.validateAdminCredentials(authorizationHeader, tenantId, registry);
-    
+
     return authorizationService
         .adminLogout(requestDto.getUserId(), tenantId)
         .andThen(
@@ -49,4 +49,4 @@ public class AdminLogout {
                     .build()))
         .toCompletionStage();
   }
-} 
+}

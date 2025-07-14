@@ -18,4 +18,4 @@ public class V1AdminLogoutRequestDto {
       throw INVALID_REQUEST.getCustomException("User ID is required");
     }
   }
-} 
+}

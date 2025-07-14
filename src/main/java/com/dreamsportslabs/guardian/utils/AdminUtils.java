@@ -29,13 +29,14 @@ public class AdminUtils {
     TenantConfig tenantConfig = registry.get(tenantId, TenantConfig.class);
     AdminConfig adminConfig = tenantConfig.getAdminConfig();
 
-    if (adminConfig == null || StringUtils.isBlank(adminConfig.getUsername()) 
+    if (adminConfig == null
+        || StringUtils.isBlank(adminConfig.getUsername())
         || StringUtils.isBlank(adminConfig.getPassword())) {
       log.error("Admin configuration not found for tenant: {}", tenantId);
       throw UNAUTHORIZED.getCustomException("Admin configuration not available");
     }
 
-    if (!username.equals(adminConfig.getUsername()) 
+    if (!username.equals(adminConfig.getUsername())
         || !password.equals(adminConfig.getPassword())) {
       log.warn("Invalid admin credentials for tenant: {}", tenantId);
       throw UNAUTHORIZED.getCustomException("Invalid admin credentials");
@@ -55,4 +56,4 @@ public class AdminUtils {
       throw UNAUTHORIZED.getCustomException("Invalid authorization header format");
     }
   }
-} 
+}

@@ -3,8 +3,8 @@ package com.dreamsportslabs.guardian.it;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.dreamsportslabs.guardian.dto.request.V1AdminLogoutRequestDto;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 class AdminLogoutIT {
 
@@ -38,4 +38,4 @@ class AdminLogoutIT {
     // Act & Assert - should not throw exception
     requestDto.validate();
   }
-} 
+}
