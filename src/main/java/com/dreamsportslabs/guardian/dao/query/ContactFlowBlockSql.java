@@ -19,4 +19,7 @@ public class ContactFlowBlockSql {
 
   public static final String GET_FLOW_BLOCK_REASON =
       "SELECT reason FROM contact_flow_blocks_config WHERE tenant_id = ? AND contact = ? AND flow_name = ? AND is_active = 1 AND (unblocked_at > UNIX_TIMESTAMP()) LIMIT 1";
+
+  public static final String GET_FLOW_BLOCK_REASON_BATCH =
+      "SELECT reason FROM contact_flow_blocks_config WHERE tenant_id = ? AND flow_name = ? AND contact IN (%s) AND is_active = 1 AND (unblocked_at > UNIX_TIMESTAMP()) LIMIT 1";
 }

@@ -73,6 +73,17 @@ public class ContactFlowBlockService {
         .map(result -> new ApiBlockCheckResult(result.isBlocked(), result.getReason()));
   }
 
+  public Single<ApiBlockCheckResult> checkApiBlockedWithReasonBatch(
+      String tenantId, List<String> contacts, String apiPath) {
+    String flowName = getFlowNameForApiPath(apiPath);
+    if (flowName == null) {
+      return Single.just(new ApiBlockCheckResult(false, null));
+    }
+    return contactFlowBlockDao
+        .checkFlowBlockedWithReasonBatch(tenantId, contacts, flowName)
+        .map(result -> new ApiBlockCheckResult(result.isBlocked(), result.getReason()));
+  }
+
   private String getFlowNameForApiPath(String apiPath) {
     return BlockFlow.getAllFlowNames().stream()
         .filter(flowName -> BlockFlow.fromString(flowName).getApiPaths().contains(apiPath))

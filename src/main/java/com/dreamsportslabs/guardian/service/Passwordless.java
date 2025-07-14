@@ -60,10 +60,11 @@ public class Passwordless {
       return performPasswordlessInit(requestDto, headers, tenantId);
     }
 
-    return checkContactsForBlocking(contacts, tenantId, "/v1/passwordless/init")
+    return contactFlowBlockService
+        .checkApiBlockedWithReasonBatch(tenantId, contacts, "/v1/passwordless/init")
         .flatMap(
             blockedResult -> {
-              if (blockedResult != null && blockedResult.isBlocked()) {
+              if (blockedResult.isBlocked()) {
                 log.warn(
                     "Passwordless init API is blocked for contacts: {} in tenant: {} with reason: {}",
                     contacts,
@@ -206,10 +207,11 @@ public class Passwordless {
                 return performPasswordlessComplete(dto, tenantId);
               }
 
-              return checkContactsForBlocking(contacts, tenantId, "/v1/passwordless/complete")
+              return contactFlowBlockService
+                  .checkApiBlockedWithReasonBatch(tenantId, contacts, "/v1/passwordless/complete")
                   .flatMap(
                       blockedResult -> {
-                        if (blockedResult != null && blockedResult.isBlocked()) {
+                        if (blockedResult.isBlocked()) {
                           log.warn(
                               "Passwordless complete API is blocked for contacts: {} in tenant: {} with reason: {}",
                               contacts,
@@ -280,59 +282,6 @@ public class Passwordless {
             m -> {
               throw INCORRECT_OTP.getCustomException(
                   Map.of(OTP_RETRIES_LEFT, model.getMaxTries() - model.getTries()));
-            });
-  }
-
-  private Single<ContactFlowBlockService.ApiBlockCheckResult> checkContactsForBlocking(
-      List<String> contacts, String tenantId, String apiPath) {
-    return Single.fromCallable(() -> contacts)
-        .flatMap(
-            contactList -> {
-              if (contactList.isEmpty()) {
-                return Single.just((ContactFlowBlockService.ApiBlockCheckResult) null);
-              }
-
-              String firstContact = contactList.get(0);
-              return contactFlowBlockService
-                  .checkApiBlockedWithReason(tenantId, firstContact, apiPath)
-                  .flatMap(
-                      result -> {
-                        if (result.isBlocked()) {
-                          return Single.just(result);
-                        }
-
-                        if (contactList.size() > 1) {
-                          return checkRemainingContacts(
-                              contactList.subList(1, contactList.size()), tenantId, apiPath);
-                        }
-
-                        return Single.just(result);
-                      });
-            });
-  }
-
-  private Single<ContactFlowBlockService.ApiBlockCheckResult> checkRemainingContacts(
-      List<String> contacts, String tenantId, String apiPath) {
-    if (contacts.isEmpty()) {
-      return Single.just(new ContactFlowBlockService.ApiBlockCheckResult(false, null));
-    }
-
-    String contact = contacts.get(0);
-    return contactFlowBlockService
-        .checkApiBlockedWithReason(tenantId, contact, apiPath)
-        .flatMap(
-            result -> {
-              if (result.isBlocked()) {
-                return Single.just(result);
-              }
-
-              // Check remaining contacts
-              if (contacts.size() > 1) {
-                return checkRemainingContacts(
-                    contacts.subList(1, contacts.size()), tenantId, apiPath);
-              }
-
-              return Single.just(result);
             });
   }
 }
