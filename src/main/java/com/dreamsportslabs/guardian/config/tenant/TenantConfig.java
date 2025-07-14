@@ -18,4 +18,5 @@ public class TenantConfig {
   private UserConfig userConfig;
   private TokenConfig tokenConfig;
   private ContactVerifyConfig contactVerifyConfig;
+  private AdminConfig adminConfig;
 }

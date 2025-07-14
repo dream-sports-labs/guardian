@@ -106,4 +106,12 @@ public class ConfigQuery {
        FROM contact_verify_config
        WHERE tenant_id = ?
     """;
+
+  public static final String ADMIN_CONFIG =
+      """
+    SELECT username,
+           password
+    FROM admin_config
+    WHERE tenant_id = ?
+    """;
 }

@@ -48,6 +48,7 @@ public class AuthorizationService {
   private final RefreshTokenDao refreshTokenDao;
   private final CodeDao codeDao;
   private final RevocationDao revocationDao;
+  private final SessionCleanupService sessionCleanupService;
 
   public Single<Object> generate(
       JsonObject user, String responseType, MetaInfo metaInfo, String tenantId) {
@@ -154,6 +155,19 @@ public class AuthorizationService {
 
   public Completable logout(V1LogoutRequestDto requestDto, String tenantId) {
     return invalidateRefreshToken(requestDto, tenantId);
+  }
+
+  public Completable adminLogout(String userId, String tenantId) {
+    return refreshTokenDao
+        .getRefreshTokens(userId, tenantId)
+        .flatMap(
+            list ->
+                refreshTokenDao
+                    .invalidateAllRefreshTokensForUser(userId, tenantId)
+                    .andThen(Single.just(list)))
+        .doOnSuccess(tokens -> updateRevocations(tokens, tenantId))
+        .ignoreElement()
+        .andThen(sessionCleanupService.cleanupAllUserSessions(userId, tenantId));
   }
 
   private Completable invalidateRefreshToken(V1LogoutRequestDto dto, String tenantId) {

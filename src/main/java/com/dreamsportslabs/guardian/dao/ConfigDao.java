@@ -9,9 +9,11 @@ import static com.dreamsportslabs.guardian.dao.query.ConfigQuery.OTP_CONFIG;
 import static com.dreamsportslabs.guardian.dao.query.ConfigQuery.SMS_CONFIG;
 import static com.dreamsportslabs.guardian.dao.query.ConfigQuery.TOKEN_CONFIG;
 import static com.dreamsportslabs.guardian.dao.query.ConfigQuery.USER_CONFIG;
+import static com.dreamsportslabs.guardian.dao.query.ConfigQuery.ADMIN_CONFIG;
 import static com.dreamsportslabs.guardian.exception.ErrorEnum.INVALID_REQUEST;
 
 import com.dreamsportslabs.guardian.client.MysqlClient;
+import com.dreamsportslabs.guardian.config.tenant.AdminConfig;
 import com.dreamsportslabs.guardian.config.tenant.AuthCodeConfig;
 import com.dreamsportslabs.guardian.config.tenant.ContactVerifyConfig;
 import com.dreamsportslabs.guardian.config.tenant.EmailConfig;
@@ -48,7 +50,8 @@ public class ConfigDao {
             appendGoogleConfig(tenantId, builder),
             appendSmsConfig(tenantId, builder),
             appendOtpConfig(tenantId, builder),
-            appendContactVerifyConfig(tenantId, builder));
+            appendContactVerifyConfig(tenantId, builder),
+            appendAdminConfig(tenantId, builder));
     return Completable.merge(configSources)
         .andThen(Single.defer(() -> Single.just(builder.build())));
   }
@@ -107,6 +110,12 @@ public class ConfigDao {
   private Completable appendSmsConfig(String tenantId, TenantConfig.TenantConfigBuilder builder) {
     return getConfigFromDb(tenantId, SmsConfig.class, SMS_CONFIG)
         .map(builder::smsConfig)
+        .ignoreElement();
+  }
+
+  private Completable appendAdminConfig(String tenantId, TenantConfig.TenantConfigBuilder builder) {
+    return getConfigFromDb(tenantId, AdminConfig.class, ADMIN_CONFIG)
+        .map(builder::adminConfig)
         .ignoreElement();
   }
 
