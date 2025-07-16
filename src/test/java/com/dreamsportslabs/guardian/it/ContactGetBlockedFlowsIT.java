@@ -29,10 +29,10 @@ public class ContactGetBlockedFlowsIT {
   @DisplayName("Should get blocked Flows successfully")
   public void getBlockedFlows_success() {
     // Arrange
-    String contactId = randomNumeric(10);
+    String contact = randomNumeric(10);
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> blockRequestBody = new HashMap<>();
-    blockRequestBody.put("contact", contactId);
+    blockRequestBody.put("contact", contact);
     blockRequestBody.put("blockFlows", new String[] {Flow_1, Flow_2});
     blockRequestBody.put("reason", randomAlphanumeric(10));
     blockRequestBody.put("unblockedAt", unblockedAt);
@@ -41,12 +41,12 @@ public class ContactGetBlockedFlowsIT {
     blockResponse.then().statusCode(HttpStatus.SC_OK);
 
     // Act
-    Response response = getBlockedFlows(TENANT_ID, contactId);
+    Response response = getBlockedFlows(TENANT_ID, contact);
 
     // Assert
     response.then().statusCode(HttpStatus.SC_OK);
 
-    assertThat(response.getBody().jsonPath().getString("contact"), equalTo(contactId));
+    assertThat(response.getBody().jsonPath().getString("contact"), equalTo(contact));
     assertThat(response.getBody().jsonPath().getInt("totalCount"), equalTo(2));
 
     List<String> blockedFlows = response.getBody().jsonPath().getList("blockedFlows");
@@ -87,15 +87,15 @@ public class ContactGetBlockedFlowsIT {
   @DisplayName("Should return empty list when no Flows are blocked")
   public void getBlockedFlows_noBlockedFlows_returnsEmptyList() {
     // Arrange
-    String contactId = randomNumeric(10);
+    String contact = randomNumeric(10);
 
     // Act
-    Response response = getBlockedFlows(TENANT_ID, contactId);
+    Response response = getBlockedFlows(TENANT_ID, contact);
 
     // Assert
     response.then().statusCode(HttpStatus.SC_OK);
 
-    assertThat(response.getBody().jsonPath().getString("contact"), equalTo(contactId));
+    assertThat(response.getBody().jsonPath().getString("contact"), equalTo(contact));
     assertThat(response.getBody().jsonPath().getInt("totalCount"), equalTo(0));
 
     List<String> blockedFlows = response.getBody().jsonPath().getList("blockedFlows");
@@ -106,10 +106,10 @@ public class ContactGetBlockedFlowsIT {
   @DisplayName("Should return error for unknown tenant")
   public void getBlockedFlows_unknownTenant_returnsError() {
     // Arrange
-    String contactId = randomNumeric(10);
+    String contact = randomNumeric(10);
 
     // Act
-    Response response = getBlockedFlows(randomAlphanumeric(8), contactId);
+    Response response = getBlockedFlows(randomAlphanumeric(8), contact);
 
     // Assert
     response
@@ -122,17 +122,17 @@ public class ContactGetBlockedFlowsIT {
 
   @Test
   @DisplayName("Should handle very long contact ID")
-  public void getBlockedFlows_longContactId_success() {
+  public void getBlockedFlows_longcontact_success() {
     // Arrange
-    String longContactId = "a".repeat(1000);
+    String longcontact = "a".repeat(1000);
 
     // Act
-    Response response = getBlockedFlows(TENANT_ID, longContactId);
+    Response response = getBlockedFlows(TENANT_ID, longcontact);
 
     // Assert
     response.then().statusCode(HttpStatus.SC_OK);
 
-    assertThat(response.getBody().jsonPath().getString("contact"), equalTo(longContactId));
+    assertThat(response.getBody().jsonPath().getString("contact"), equalTo(longcontact));
     assertThat(response.getBody().jsonPath().getInt("totalCount"), equalTo(0));
 
     List<String> blockedFlows = response.getBody().jsonPath().getList("blockedFlows");
@@ -143,10 +143,10 @@ public class ContactGetBlockedFlowsIT {
   @DisplayName("Should return correct blocked Flows after partial unblock")
   public void getBlockedFlows_afterPartialUnblock_success() {
     // Arrange
-    String contactId = randomNumeric(10);
+    String contact = randomNumeric(10);
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> blockRequestBody = new HashMap<>();
-    blockRequestBody.put("contact", contactId);
+    blockRequestBody.put("contact", contact);
     blockRequestBody.put("blockFlows", new String[] {Flow_1, Flow_2});
     blockRequestBody.put("reason", randomAlphanumeric(10));
     blockRequestBody.put("unblockedAt", unblockedAt);
@@ -155,14 +155,14 @@ public class ContactGetBlockedFlowsIT {
     blockResponse.then().statusCode(HttpStatus.SC_OK);
 
     // Verify
-    Response initialResponse = getBlockedFlows(TENANT_ID, contactId);
+    Response initialResponse = getBlockedFlows(TENANT_ID, contact);
     initialResponse.then().statusCode(HttpStatus.SC_OK);
-    assertThat(initialResponse.getBody().jsonPath().getString("contact"), equalTo(contactId));
+    assertThat(initialResponse.getBody().jsonPath().getString("contact"), equalTo(contact));
     assertThat(initialResponse.getBody().jsonPath().getInt("totalCount"), equalTo(2));
 
     // Act
     Map<String, Object> unblockRequestBody = new HashMap<>();
-    unblockRequestBody.put("contact", contactId);
+    unblockRequestBody.put("contact", contact);
     unblockRequestBody.put("unblockFlows", new String[] {Flow_1});
 
     // verify
@@ -170,12 +170,12 @@ public class ContactGetBlockedFlowsIT {
     unblockResponse.then().statusCode(HttpStatus.SC_OK);
 
     // Act
-    Response response = getBlockedFlows(TENANT_ID, contactId);
+    Response response = getBlockedFlows(TENANT_ID, contact);
 
     // Assert
     response.then().statusCode(HttpStatus.SC_OK);
 
-    assertThat(response.getBody().jsonPath().getString("contact"), equalTo(contactId));
+    assertThat(response.getBody().jsonPath().getString("contact"), equalTo(contact));
     assertThat(response.getBody().jsonPath().getInt("totalCount"), equalTo(1));
 
     List<String> blockedFlows = response.getBody().jsonPath().getList("blockedFlows");

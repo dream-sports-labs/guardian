@@ -15,10 +15,7 @@ public class ContactFlowBlockSql {
       "UPDATE contact_flow_blocks_config SET is_active = 0 WHERE tenant_id = ? AND contact = ? AND flow_name = ?";
 
   public static final String GET_ACTIVE_FLOW_BLOCKS_BY_CONTACT =
-      "SELECT contact, flow_name, unblocked_at FROM contact_flow_blocks_config WHERE tenant_id = ? AND contact = ? AND is_active = 1";
-
-  public static final String GET_FLOW_BLOCK_REASON =
-      "SELECT reason FROM contact_flow_blocks_config WHERE tenant_id = ? AND contact = ? AND flow_name = ? AND is_active = 1 AND (unblocked_at > UNIX_TIMESTAMP()) LIMIT 1";
+      "SELECT contact, flow_name FROM contact_flow_blocks_config WHERE tenant_id = ? AND contact = ? AND is_active = 1 AND (unblocked_at > UNIX_TIMESTAMP())";
 
   public static final String GET_FLOW_BLOCK_REASON_BATCH =
       "SELECT reason FROM contact_flow_blocks_config WHERE tenant_id = ? AND flow_name = ? AND contact IN (%s) AND is_active = 1 AND (unblocked_at > UNIX_TIMESTAMP()) LIMIT 1";

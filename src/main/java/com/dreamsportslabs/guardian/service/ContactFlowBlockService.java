@@ -11,7 +11,6 @@ import com.google.inject.Inject;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -55,11 +54,7 @@ public class ContactFlowBlockService {
 
   public Single<List<ContactFlowBlockModel>> getActiveFlowsBlockedForContact(
       String tenantId, String contact) {
-    return contactFlowBlockDao
-        .getActiveFlowBlocksByContact(tenantId, contact)
-        .map(
-            blocksList ->
-                blocksList.stream().filter(this::isBlockActive).collect(Collectors.toList()));
+    return contactFlowBlockDao.getActiveFlowBlocksByContact(tenantId, contact);
   }
 
   public Single<ApiBlockCheckResult> checkApiBlockedWithReason(
@@ -69,7 +64,7 @@ public class ContactFlowBlockService {
       return Single.just(new ApiBlockCheckResult(false, null));
     }
     return contactFlowBlockDao
-        .checkFlowBlockedWithReason(tenantId, contact, flowName)
+        .checkFlowBlockedWithReasonBatch(tenantId, List.of(contact), flowName)
         .map(result -> new ApiBlockCheckResult(result.isBlocked(), result.getReason()));
   }
 

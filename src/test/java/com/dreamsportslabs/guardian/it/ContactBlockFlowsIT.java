@@ -91,11 +91,11 @@ public class ContactBlockFlowsIT {
   @DisplayName("Should block Flows successfully")
   public void blockFlow_success() {
     // Arrange
-    String contactId = randomNumeric(10);
+    String contact = randomNumeric(10);
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> requestBody =
         generateBlockRequestBody(
-            contactId,
+            contact,
             new String[] {PASSWORDLESS_FLOW, SOCIAL_AUTH_FLOW},
             randomAlphanumeric(10),
             unblockedAt);
@@ -106,7 +106,7 @@ public class ContactBlockFlowsIT {
     // Assert
     response.then().statusCode(HttpStatus.SC_OK);
 
-    assertThat(response.getBody().jsonPath().getString("contact"), equalTo(contactId));
+    assertThat(response.getBody().jsonPath().getString("contact"), equalTo(contact));
     assertThat(
         response.getBody().jsonPath().getString("message"), equalTo("Flows blocked successfully"));
 
@@ -144,11 +144,11 @@ public class ContactBlockFlowsIT {
   @DisplayName("Should update existing block successfully")
   public void blockFlow_updateExisting_success() {
     // Arrange
-    String contactId = randomNumeric(10);
+    String contact = randomNumeric(10);
     Long unblockedAt1 = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> requestBody1 =
         generateBlockRequestBody(
-            contactId, new String[] {PASSWORDLESS_FLOW}, randomAlphanumeric(10), unblockedAt1);
+            contact, new String[] {PASSWORDLESS_FLOW}, randomAlphanumeric(10), unblockedAt1);
 
     Response response1 = blockContactFlows(TENANT_ID, requestBody1);
     response1.then().statusCode(HttpStatus.SC_OK);
@@ -160,7 +160,7 @@ public class ContactBlockFlowsIT {
     Long unblockedAt2 = Instant.now().plusSeconds(7200).toEpochMilli() / 1000;
     Map<String, Object> requestBody2 =
         generateBlockRequestBody(
-            contactId,
+            contact,
             new String[] {PASSWORDLESS_FLOW, SOCIAL_AUTH_FLOW},
             randomAlphanumeric(10),
             unblockedAt2);
@@ -171,7 +171,7 @@ public class ContactBlockFlowsIT {
     // Assert
     response2.then().statusCode(HttpStatus.SC_OK);
 
-    assertThat(response2.getBody().jsonPath().getString("contact"), equalTo(contactId));
+    assertThat(response2.getBody().jsonPath().getString("contact"), equalTo(contact));
     assertThat(
         response2.getBody().jsonPath().getString("message"), equalTo("Flows blocked successfully"));
 
@@ -230,11 +230,11 @@ public class ContactBlockFlowsIT {
   @DisplayName("Should return error for missing blockFlows")
   public void blockFlow_missingBlockFlows() {
     // Arrange
-    String contactId = randomNumeric(10);
+    String contact = randomNumeric(10);
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
 
     Map<String, Object> requestBody = new HashMap<>();
-    requestBody.put("contact", contactId);
+    requestBody.put("contact", contact);
     requestBody.put("reason", randomAlphanumeric(10));
     requestBody.put("unblockedAt", unblockedAt);
 
@@ -254,10 +254,10 @@ public class ContactBlockFlowsIT {
   @DisplayName("Should return error for empty blockFlows array")
   public void blockFlow_emptyBlockFlows() {
     // Arrange
-    String contactId = randomNumeric(10);
+    String contact = randomNumeric(10);
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> requestBody =
-        generateBlockRequestBody(contactId, new String[] {}, randomAlphanumeric(10), unblockedAt);
+        generateBlockRequestBody(contact, new String[] {}, randomAlphanumeric(10), unblockedAt);
 
     // Act
     Response response = blockContactFlows(TENANT_ID, requestBody);
@@ -275,10 +275,10 @@ public class ContactBlockFlowsIT {
   @DisplayName("Should return error for missing reason")
   public void blockFlow_missingReason() {
     // Arrange
-    String contactId = randomNumeric(10);
+    String contact = randomNumeric(10);
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> requestBody = new HashMap<>();
-    requestBody.put("contact", contactId);
+    requestBody.put("contact", contact);
     requestBody.put("blockFlows", new String[] {PASSWORDLESS_FLOW});
     requestBody.put("unblockedAt", unblockedAt);
 
@@ -298,10 +298,10 @@ public class ContactBlockFlowsIT {
   @DisplayName("Should return error for empty reason")
   public void blockFlow_emptyReason() {
     // Arrange
-    String contactId = randomNumeric(10);
+    String contact = randomNumeric(10);
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> requestBody =
-        generateBlockRequestBody(contactId, new String[] {PASSWORDLESS_FLOW}, "", unblockedAt);
+        generateBlockRequestBody(contact, new String[] {PASSWORDLESS_FLOW}, "", unblockedAt);
 
     // Act
     Response response = blockContactFlows(TENANT_ID, requestBody);
@@ -319,11 +319,11 @@ public class ContactBlockFlowsIT {
   @DisplayName("Should return error for past unblockedAt")
   public void blockFlow_pastUnblockedAt() {
     // Arrange
-    String contactId = randomNumeric(10);
+    String contact = randomNumeric(10);
     Long pastTime = Instant.now().minusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> requestBody =
         generateBlockRequestBody(
-            contactId, new String[] {PASSWORDLESS_FLOW}, randomAlphanumeric(10), pastTime);
+            contact, new String[] {PASSWORDLESS_FLOW}, randomAlphanumeric(10), pastTime);
 
     // Act
     Response response = blockContactFlows(TENANT_ID, requestBody);
@@ -341,11 +341,11 @@ public class ContactBlockFlowsIT {
   @DisplayName("Should return error for current unblockedAt")
   public void blockFlow_currentUnblockedAt() {
     // Arrange
-    String contactId = randomNumeric(10);
+    String contact = randomNumeric(10);
     Long currentTime = Instant.now().toEpochMilli() / 1000;
     Map<String, Object> requestBody =
         generateBlockRequestBody(
-            contactId, new String[] {PASSWORDLESS_FLOW}, randomAlphanumeric(10), currentTime);
+            contact, new String[] {PASSWORDLESS_FLOW}, randomAlphanumeric(10), currentTime);
 
     // Act
     Response response = blockContactFlows(TENANT_ID, requestBody);
@@ -363,11 +363,11 @@ public class ContactBlockFlowsIT {
   @DisplayName("Should return error for unknown tenant")
   public void blockFlow_unknownTenant() {
     // Arrange
-    String contactId = randomNumeric(10);
+    String contact = randomNumeric(10);
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> requestBody =
         generateBlockRequestBody(
-            contactId, new String[] {PASSWORDLESS_FLOW}, randomAlphanumeric(10), unblockedAt);
+            contact, new String[] {PASSWORDLESS_FLOW}, randomAlphanumeric(10), unblockedAt);
 
     // Act
     Response response = blockContactFlows(randomAlphanumeric(8), requestBody);
@@ -385,10 +385,10 @@ public class ContactBlockFlowsIT {
   @DisplayName("Should return error for null blockFlows")
   public void blockFlow_nullBlockFlows() {
     // Arrange
-    String contactId = randomNumeric(10);
+    String contact = randomNumeric(10);
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> requestBody = new HashMap<>();
-    requestBody.put("contact", contactId);
+    requestBody.put("contact", contact);
     requestBody.put("blockFlows", null);
     requestBody.put("reason", randomAlphanumeric(10));
     requestBody.put("unblockedAt", unblockedAt);
@@ -409,10 +409,10 @@ public class ContactBlockFlowsIT {
   @DisplayName("Should return error for null reason")
   public void blockFlow_nullReason() {
     // Arrange
-    String contactId = randomNumeric(10);
+    String contact = randomNumeric(10);
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> requestBody = new HashMap<>();
-    requestBody.put("contact", contactId);
+    requestBody.put("contact", contact);
     requestBody.put("blockFlows", new String[] {PASSWORDLESS_FLOW});
     requestBody.put("unblockedAt", unblockedAt);
 
@@ -455,24 +455,24 @@ public class ContactBlockFlowsIT {
   @DisplayName("Should verify passwordless flow is blocked after blocking")
   public void verifyPasswordlessFlowBlocked() {
     // Arrange
-    String contactId = randomAlphanumeric(10) + "@" + randomAlphanumeric(5) + ".com";
+    String contact = randomAlphanumeric(10) + "@" + randomAlphanumeric(5) + ".com";
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     String reason = randomAlphanumeric(10);
     Map<String, Object> requestBody =
-        generateBlockRequestBody(contactId, new String[] {PASSWORDLESS_FLOW}, reason, unblockedAt);
+        generateBlockRequestBody(contact, new String[] {PASSWORDLESS_FLOW}, reason, unblockedAt);
 
     // Act
     Response blockResponse = blockContactFlows(TENANT_ID, requestBody);
     blockResponse.then().statusCode(HttpStatus.SC_OK);
 
     // Verify
-    assertThat(blockResponse.getBody().jsonPath().getString("contact"), equalTo(contactId));
+    assertThat(blockResponse.getBody().jsonPath().getString("contact"), equalTo(contact));
     assertThat(
         blockResponse.getBody().jsonPath().getString("message"),
         equalTo("Flows blocked successfully"));
 
     // Act
-    Map<String, Object> passwordlessInitBody = generatePasswordlessInitRequestBody(contactId);
+    Map<String, Object> passwordlessInitBody = generatePasswordlessInitRequestBody(contact);
     Response passwordlessInitResponse = passwordlessInit(TENANT_ID, passwordlessInitBody);
 
     // Assert

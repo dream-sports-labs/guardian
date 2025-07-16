@@ -1,7 +1,6 @@
 package com.dreamsportslabs.guardian.dao;
 
 import static com.dreamsportslabs.guardian.dao.query.ContactFlowBlockSql.GET_ACTIVE_FLOW_BLOCKS_BY_CONTACT;
-import static com.dreamsportslabs.guardian.dao.query.ContactFlowBlockSql.GET_FLOW_BLOCK_REASON;
 import static com.dreamsportslabs.guardian.dao.query.ContactFlowBlockSql.GET_FLOW_BLOCK_REASON_BATCH;
 import static com.dreamsportslabs.guardian.dao.query.ContactFlowBlockSql.UNBLOCK_CONTACT_FLOW;
 import static com.dreamsportslabs.guardian.dao.query.ContactFlowBlockSql.UPSERT_CONTACT_FLOW_BLOCK;
@@ -72,22 +71,6 @@ public class ContactFlowBlockDao {
         .preparedQuery(GET_ACTIVE_FLOW_BLOCKS_BY_CONTACT)
         .rxExecute(Tuple.of(tenantId, contact))
         .map(rows -> JsonUtils.rowSetToList(rows, ContactFlowBlockModel.class));
-  }
-
-  public Single<BlockCheckResult> checkFlowBlockedWithReason(
-      String tenantId, String contact, String flowName) {
-    return mysqlClient
-        .getReaderPool()
-        .preparedQuery(GET_FLOW_BLOCK_REASON)
-        .rxExecute(Tuple.of(tenantId, contact, flowName))
-        .map(
-            rows -> {
-              if (rows.size() > 0) {
-                String reason = rows.iterator().next().getString("reason");
-                return new BlockCheckResult(true, reason);
-              }
-              return new BlockCheckResult(false, null);
-            });
   }
 
   public Single<BlockCheckResult> checkFlowBlockedWithReasonBatch(

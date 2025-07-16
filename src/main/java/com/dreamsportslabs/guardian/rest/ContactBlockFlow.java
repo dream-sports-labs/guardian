@@ -16,8 +16,8 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
@@ -49,8 +49,7 @@ public class ContactBlockFlow {
                         .contact(requestDto.getContact())
                         .blockedFlows(requestDto.getBlockFlows())
                         .build()))
-        .map(Response::ok)
-        .map(Response.ResponseBuilder::build)
+        .map(response -> Response.ok(response).build())
         .toCompletionStage();
   }
 
@@ -72,19 +71,18 @@ public class ContactBlockFlow {
                         .contact(requestDto.getContact())
                         .unblockedFlows(requestDto.getUnblockFlows())
                         .build()))
-        .map(Response::ok)
-        .map(Response.ResponseBuilder::build)
+        .map(response -> Response.ok(response).build())
         .toCompletionStage();
   }
 
   @GET
-  @Path("/{contactId}/blocked-flows")
+  @Path("/blocked-flows")
   @Produces(MediaType.APPLICATION_JSON)
   public CompletionStage<Response> getBlockedFlows(
-      @HeaderParam(TENANT_ID) String tenantId, @PathParam("contactId") String contactId) {
+      @HeaderParam(TENANT_ID) String tenantId, @QueryParam("contact") String contact) {
 
     return contactFlowBlockService
-        .getActiveFlowsBlockedForContact(tenantId, contactId)
+        .getActiveFlowsBlockedForContact(tenantId, contact)
         .map(
             activeBlocks -> {
               List<String> blockedFlows =
@@ -92,7 +90,7 @@ public class ContactBlockFlow {
 
               V1ContactBlockedFlowsResponseDto responseDto =
                   V1ContactBlockedFlowsResponseDto.builder()
-                      .contact(contactId)
+                      .contact(contact)
                       .blockedFlows(blockedFlows)
                       .totalCount(blockedFlows.size())
                       .build();

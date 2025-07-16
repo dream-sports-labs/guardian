@@ -189,10 +189,9 @@ public class ApplicationIoUtils {
     Map<String, String> headers = new HashMap<>();
     headers.put(HEADER_TENANT_ID, tenantId);
 
-    return execute(
-        null,
-        headers,
-        new HashMap<>(),
-        spec -> spec.get("/v1/contact/" + contactId + "/blocked-flows"));
+    Map<String, String> queryParams = new HashMap<>();
+    queryParams.put("contact", contactId);
+
+    return execute(null, headers, queryParams, spec -> spec.get("/v1/contact/blocked-flows"));
   }
 }
