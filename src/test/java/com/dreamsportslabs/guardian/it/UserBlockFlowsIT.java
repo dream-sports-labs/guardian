@@ -7,7 +7,7 @@ import static com.dreamsportslabs.guardian.Constants.BODY_PARAM_RESPONSE_TYPE_TO
 import static com.dreamsportslabs.guardian.Constants.ERROR;
 import static com.dreamsportslabs.guardian.Constants.ERROR_FLOW_BLOCKED;
 import static com.dreamsportslabs.guardian.Constants.PASSWORDLESS_FLOW_SIGNINUP;
-import static com.dreamsportslabs.guardian.utils.ApplicationIoUtils.blockContactFlows;
+import static com.dreamsportslabs.guardian.utils.ApplicationIoUtils.blockUserFlows;
 import static com.dreamsportslabs.guardian.utils.ApplicationIoUtils.passwordlessInit;
 import static com.dreamsportslabs.guardian.utils.ApplicationIoUtils.sendOtp;
 import static com.dreamsportslabs.guardian.utils.ApplicationIoUtils.signIn;
@@ -31,7 +31,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 @ExtendWith(Setup.class)
-public class ContactBlockFlowsIT {
+public class UserBlockFlowsIT {
 
   private static final String TENANT_ID = "tenant1";
   private static final String EMAIL_CONTACT =
@@ -42,9 +42,9 @@ public class ContactBlockFlowsIT {
   private static final String PASSWORD_FLOW = "password";
 
   private Map<String, Object> generateBlockRequestBody(
-      String contact, String[] blockFlows, String reason, Long unblockedAt) {
+      String userIdentifier, String[] blockFlows, String reason, Long unblockedAt) {
     Map<String, Object> requestBody = new HashMap<>();
-    requestBody.put("contact", contact);
+    requestBody.put("userIdentifier", userIdentifier);
     requestBody.put("blockFlows", blockFlows);
     requestBody.put("reason", reason);
     requestBody.put("unblockedAt", unblockedAt);
@@ -101,12 +101,12 @@ public class ContactBlockFlowsIT {
             unblockedAt);
 
     // Act
-    Response response = blockContactFlows(TENANT_ID, requestBody);
+    Response response = blockUserFlows(TENANT_ID, requestBody);
 
     // Assert
     response.then().statusCode(HttpStatus.SC_OK);
 
-    assertThat(response.getBody().jsonPath().getString("contact"), equalTo(contact));
+    assertThat(response.getBody().jsonPath().getString("userIdentifier"), equalTo(contact));
     assertThat(
         response.getBody().jsonPath().getString("message"), equalTo("Flows blocked successfully"));
 
@@ -117,7 +117,7 @@ public class ContactBlockFlowsIT {
   }
 
   @Test
-  @DisplayName("Should block Flows successfully with email contact")
+  @DisplayName("Should block Flows successfully with email userIdentifier")
   public void blockFlow_emailContact_success() {
     // Arrange
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
@@ -126,12 +126,12 @@ public class ContactBlockFlowsIT {
             EMAIL_CONTACT, new String[] {PASSWORDLESS_FLOW}, randomAlphanumeric(10), unblockedAt);
 
     // Act
-    Response response = blockContactFlows(TENANT_ID, requestBody);
+    Response response = blockUserFlows(TENANT_ID, requestBody);
 
     // Assert
     response.then().statusCode(HttpStatus.SC_OK);
 
-    assertThat(response.getBody().jsonPath().getString("contact"), equalTo(EMAIL_CONTACT));
+    assertThat(response.getBody().jsonPath().getString("userIdentifier"), equalTo(EMAIL_CONTACT));
     assertThat(
         response.getBody().jsonPath().getString("message"), equalTo("Flows blocked successfully"));
 
@@ -150,7 +150,7 @@ public class ContactBlockFlowsIT {
         generateBlockRequestBody(
             contact, new String[] {PASSWORDLESS_FLOW}, randomAlphanumeric(10), unblockedAt1);
 
-    Response response1 = blockContactFlows(TENANT_ID, requestBody1);
+    Response response1 = blockUserFlows(TENANT_ID, requestBody1);
     response1.then().statusCode(HttpStatus.SC_OK);
 
     List<String> blockedFlows1 = response1.getBody().jsonPath().getList("blockedFlows");
@@ -166,12 +166,12 @@ public class ContactBlockFlowsIT {
             unblockedAt2);
 
     // Act
-    Response response2 = blockContactFlows(TENANT_ID, requestBody2);
+    Response response2 = blockUserFlows(TENANT_ID, requestBody2);
 
     // Assert
     response2.then().statusCode(HttpStatus.SC_OK);
 
-    assertThat(response2.getBody().jsonPath().getString("contact"), equalTo(contact));
+    assertThat(response2.getBody().jsonPath().getString("userIdentifier"), equalTo(contact));
     assertThat(
         response2.getBody().jsonPath().getString("message"), equalTo("Flows blocked successfully"));
 
@@ -182,7 +182,7 @@ public class ContactBlockFlowsIT {
   }
 
   @Test
-  @DisplayName("Should return error for missing contact")
+  @DisplayName("Should return error for missing userIdentifier")
   public void blockFlow_missingContact() {
     // Arrange
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
@@ -193,7 +193,7 @@ public class ContactBlockFlowsIT {
     requestBody.put("unblockedAt", unblockedAt);
 
     // Act
-    Response response = blockContactFlows(TENANT_ID, requestBody);
+    Response response = blockUserFlows(TENANT_ID, requestBody);
 
     // Assert
     response
@@ -201,11 +201,11 @@ public class ContactBlockFlowsIT {
         .statusCode(HttpStatus.SC_BAD_REQUEST)
         .rootPath("error")
         .body("code", equalTo("invalid_request"))
-        .body("message", equalTo("Contact is required"));
+        .body("message", equalTo("userIdentifier is required"));
   }
 
   @Test
-  @DisplayName("Should return error for empty contact")
+  @DisplayName("Should return error for empty userIdentifier")
   public void blockFlow_emptyContact() {
     // Arrange
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
@@ -215,7 +215,7 @@ public class ContactBlockFlowsIT {
             "", new String[] {PASSWORDLESS_FLOW}, randomAlphanumeric(10), unblockedAt);
 
     // Act
-    Response response = blockContactFlows(TENANT_ID, requestBody);
+    Response response = blockUserFlows(TENANT_ID, requestBody);
 
     // Assert
     response
@@ -223,7 +223,7 @@ public class ContactBlockFlowsIT {
         .statusCode(HttpStatus.SC_BAD_REQUEST)
         .rootPath("error")
         .body("code", equalTo("invalid_request"))
-        .body("message", equalTo("Contact is required"));
+        .body("message", equalTo("userIdentifier is required"));
   }
 
   @Test
@@ -234,12 +234,12 @@ public class ContactBlockFlowsIT {
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
 
     Map<String, Object> requestBody = new HashMap<>();
-    requestBody.put("contact", contact);
+    requestBody.put("userIdentifier", contact);
     requestBody.put("reason", randomAlphanumeric(10));
     requestBody.put("unblockedAt", unblockedAt);
 
     // Act
-    Response response = blockContactFlows(TENANT_ID, requestBody);
+    Response response = blockUserFlows(TENANT_ID, requestBody);
 
     // Assert
     response
@@ -260,7 +260,7 @@ public class ContactBlockFlowsIT {
         generateBlockRequestBody(contact, new String[] {}, randomAlphanumeric(10), unblockedAt);
 
     // Act
-    Response response = blockContactFlows(TENANT_ID, requestBody);
+    Response response = blockUserFlows(TENANT_ID, requestBody);
 
     // Assert
     response
@@ -278,12 +278,12 @@ public class ContactBlockFlowsIT {
     String contact = randomNumeric(10);
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> requestBody = new HashMap<>();
-    requestBody.put("contact", contact);
+    requestBody.put("userIdentifier", contact);
     requestBody.put("blockFlows", new String[] {PASSWORDLESS_FLOW});
     requestBody.put("unblockedAt", unblockedAt);
 
     // Act
-    Response response = blockContactFlows(TENANT_ID, requestBody);
+    Response response = blockUserFlows(TENANT_ID, requestBody);
 
     // Assert
     response
@@ -304,7 +304,7 @@ public class ContactBlockFlowsIT {
         generateBlockRequestBody(contact, new String[] {PASSWORDLESS_FLOW}, "", unblockedAt);
 
     // Act
-    Response response = blockContactFlows(TENANT_ID, requestBody);
+    Response response = blockUserFlows(TENANT_ID, requestBody);
 
     // Assert
     response
@@ -326,7 +326,7 @@ public class ContactBlockFlowsIT {
             contact, new String[] {PASSWORDLESS_FLOW}, randomAlphanumeric(10), pastTime);
 
     // Act
-    Response response = blockContactFlows(TENANT_ID, requestBody);
+    Response response = blockUserFlows(TENANT_ID, requestBody);
 
     // Assert
     response
@@ -348,7 +348,7 @@ public class ContactBlockFlowsIT {
             contact, new String[] {PASSWORDLESS_FLOW}, randomAlphanumeric(10), currentTime);
 
     // Act
-    Response response = blockContactFlows(TENANT_ID, requestBody);
+    Response response = blockUserFlows(TENANT_ID, requestBody);
 
     // Assert
     response
@@ -370,7 +370,7 @@ public class ContactBlockFlowsIT {
             contact, new String[] {PASSWORDLESS_FLOW}, randomAlphanumeric(10), unblockedAt);
 
     // Act
-    Response response = blockContactFlows(randomAlphanumeric(8), requestBody);
+    Response response = blockUserFlows(randomAlphanumeric(8), requestBody);
 
     // Assert
     response
@@ -388,13 +388,13 @@ public class ContactBlockFlowsIT {
     String contact = randomNumeric(10);
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> requestBody = new HashMap<>();
-    requestBody.put("contact", contact);
+    requestBody.put("userIdentifier", contact);
     requestBody.put("blockFlows", null);
     requestBody.put("reason", randomAlphanumeric(10));
     requestBody.put("unblockedAt", unblockedAt);
 
     // Act
-    Response response = blockContactFlows(TENANT_ID, requestBody);
+    Response response = blockUserFlows(TENANT_ID, requestBody);
 
     // Assert
     response
@@ -412,12 +412,12 @@ public class ContactBlockFlowsIT {
     String contact = randomNumeric(10);
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> requestBody = new HashMap<>();
-    requestBody.put("contact", contact);
+    requestBody.put("userIdentifier", contact);
     requestBody.put("blockFlows", new String[] {PASSWORDLESS_FLOW});
     requestBody.put("unblockedAt", unblockedAt);
 
     // Act
-    Response response = blockContactFlows(TENANT_ID, requestBody);
+    Response response = blockUserFlows(TENANT_ID, requestBody);
 
     // Assert
     response
@@ -429,18 +429,18 @@ public class ContactBlockFlowsIT {
   }
 
   @Test
-  @DisplayName("Should return error for null contact")
+  @DisplayName("Should return error for null userIdentifier")
   public void blockFlow_nullContact() {
     // Arrange
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> requestBody = new HashMap<>();
-    requestBody.put("contact", null);
+    requestBody.put("userIdentifier", null);
     requestBody.put("blockFlows", new String[] {PASSWORDLESS_FLOW});
     requestBody.put("reason", randomAlphanumeric(10));
     requestBody.put("unblockedAt", unblockedAt);
 
     // Act
-    Response response = blockContactFlows(TENANT_ID, requestBody);
+    Response response = blockUserFlows(TENANT_ID, requestBody);
 
     // Assert
     response
@@ -448,7 +448,7 @@ public class ContactBlockFlowsIT {
         .statusCode(HttpStatus.SC_BAD_REQUEST)
         .rootPath("error")
         .body("code", equalTo("invalid_request"))
-        .body("message", equalTo("Contact is required"));
+        .body("message", equalTo("userIdentifier is required"));
   }
 
   @Test
@@ -462,11 +462,11 @@ public class ContactBlockFlowsIT {
         generateBlockRequestBody(contact, new String[] {PASSWORDLESS_FLOW}, reason, unblockedAt);
 
     // Act
-    Response blockResponse = blockContactFlows(TENANT_ID, requestBody);
+    Response blockResponse = blockUserFlows(TENANT_ID, requestBody);
     blockResponse.then().statusCode(HttpStatus.SC_OK);
 
     // Verify
-    assertThat(blockResponse.getBody().jsonPath().getString("contact"), equalTo(contact));
+    assertThat(blockResponse.getBody().jsonPath().getString("userIdentifier"), equalTo(contact));
     assertThat(
         blockResponse.getBody().jsonPath().getString("message"),
         equalTo("Flows blocked successfully"));
@@ -496,10 +496,10 @@ public class ContactBlockFlowsIT {
     Map<String, Object> blockRequestBody =
         generateBlockRequestBody(testEmail, new String[] {OTP_VERIFY_FLOW}, reason, unblockedAt);
 
-    Response blockResponse = blockContactFlows(TENANT_ID, blockRequestBody);
+    Response blockResponse = blockUserFlows(TENANT_ID, blockRequestBody);
     blockResponse.then().statusCode(HttpStatus.SC_OK);
 
-    assertThat(blockResponse.getBody().jsonPath().getString("contact"), equalTo(testEmail));
+    assertThat(blockResponse.getBody().jsonPath().getString("userIdentifier"), equalTo(testEmail));
     assertThat(
         blockResponse.getBody().jsonPath().getString("message"),
         equalTo("Flows blocked successfully"));
@@ -533,7 +533,7 @@ public class ContactBlockFlowsIT {
       Map<String, Object> blockRequestBody =
           generateBlockRequestBody(testEmail, new String[] {OTP_VERIFY_FLOW}, reason, unblockedAt);
 
-      Response blockResponse = blockContactFlows(TENANT_ID, blockRequestBody);
+      Response blockResponse = blockUserFlows(TENANT_ID, blockRequestBody);
       blockResponse.then().statusCode(HttpStatus.SC_OK);
 
       // Act
@@ -562,11 +562,11 @@ public class ContactBlockFlowsIT {
         generateBlockRequestBody(username, new String[] {PASSWORD_FLOW}, reason, unblockedAt);
 
     // Act
-    Response blockResponse = blockContactFlows(TENANT_ID, requestBody);
+    Response blockResponse = blockUserFlows(TENANT_ID, requestBody);
     blockResponse.then().statusCode(HttpStatus.SC_OK);
 
     // Assert
-    assertThat(blockResponse.getBody().jsonPath().getString("contact"), equalTo(username));
+    assertThat(blockResponse.getBody().jsonPath().getString("userIdentifier"), equalTo(username));
     assertThat(
         blockResponse.getBody().jsonPath().getString("message"),
         equalTo("Flows blocked successfully"));
@@ -595,11 +595,11 @@ public class ContactBlockFlowsIT {
         generateBlockRequestBody(username, new String[] {PASSWORD_FLOW}, reason, unblockedAt);
 
     // Act
-    Response blockResponse = blockContactFlows(TENANT_ID, requestBody);
+    Response blockResponse = blockUserFlows(TENANT_ID, requestBody);
     blockResponse.then().statusCode(HttpStatus.SC_OK);
 
     // Assert
-    assertThat(blockResponse.getBody().jsonPath().getString("contact"), equalTo(username));
+    assertThat(blockResponse.getBody().jsonPath().getString("userIdentifier"), equalTo(username));
     assertThat(
         blockResponse.getBody().jsonPath().getString("message"),
         equalTo("Flows blocked successfully"));

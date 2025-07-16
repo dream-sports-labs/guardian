@@ -7,8 +7,8 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class V1UnblockContactFlowResponseDto {
-  private String contact;
+public class V1UnblockUserFlowResponseDto {
+  private String userIdentifier;
   private List<String> unblockedFlows;
 
   @Default private String message = "Flows unblocked successfully";

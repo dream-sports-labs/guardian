@@ -43,7 +43,7 @@ public class SocialAuthService {
   private final UserService userService;
   private final AuthorizationService authorizationService;
   private final Registry registry;
-  private final ContactFlowBlockService contactFlowBlockService;
+  private final UserFlowBlockService userFlowBlockService;
 
   private static final String FACEBOOK_FIELDS_EMAIL = "email";
   private static final String FACEBOOK_FIELDS_USER_ID = "id";
@@ -64,20 +64,19 @@ public class SocialAuthService {
             fbUserData -> {
               String email = fbUserData.getString(FACEBOOK_FIELDS_EMAIL);
               if (email != null) {
-                return contactFlowBlockService
-                    .checkApiBlockedWithReason(tenantId, email, "/v1/auth/fb")
-                    .flatMap(
-                        result -> {
-                          if (result.isBlocked()) {
-                            log.warn(
+                return userFlowBlockService
+                    .isUserBlocked(email, tenantId, "social_auth")
+                    .map(
+                        blockedResult -> {
+                          if (blockedResult.isBlocked()) {
+                            log.info(
                                 "Facebook auth API is blocked for email: {} in tenant: {} with reason: {}",
                                 email,
                                 tenantId,
-                                result.getReason());
-                            return Single.error(
-                                FLOW_BLOCKED.getCustomException(result.getReason()));
+                                blockedResult.getReason());
+                            throw FLOW_BLOCKED.getCustomException(blockedResult.getReason());
                           }
-                          return Single.just(fbUserData);
+                          return fbUserData;
                         });
               }
               return Single.just(fbUserData);
@@ -161,9 +160,9 @@ public class SocialAuthService {
             googleUserData -> {
               String email = googleUserData.getString(OIDC_CLAIMS_EMAIL);
               if (email != null) {
-                return contactFlowBlockService
-                    .checkApiBlockedWithReason(tenantId, email, "/v1/auth/google")
-                    .flatMap(
+                return userFlowBlockService
+                    .isUserBlocked(email, tenantId, "social_auth")
+                    .map(
                         result -> {
                           if (result.isBlocked()) {
                             log.warn(
@@ -171,10 +170,9 @@ public class SocialAuthService {
                                 email,
                                 tenantId,
                                 result.getReason());
-                            return Single.error(
-                                FLOW_BLOCKED.getCustomException(result.getReason()));
+                            throw FLOW_BLOCKED.getCustomException(result.getReason());
                           }
-                          return Single.just(googleUserData);
+                          return googleUserData;
                         });
               }
               return Single.just(googleUserData);

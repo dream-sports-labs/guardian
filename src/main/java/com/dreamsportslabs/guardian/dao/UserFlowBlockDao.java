@@ -1,13 +1,13 @@
 package com.dreamsportslabs.guardian.dao;
 
-import static com.dreamsportslabs.guardian.dao.query.ContactFlowBlockSql.GET_ACTIVE_FLOW_BLOCKS_BY_CONTACT;
-import static com.dreamsportslabs.guardian.dao.query.ContactFlowBlockSql.GET_FLOW_BLOCK_REASON_BATCH;
-import static com.dreamsportslabs.guardian.dao.query.ContactFlowBlockSql.UNBLOCK_CONTACT_FLOW;
-import static com.dreamsportslabs.guardian.dao.query.ContactFlowBlockSql.UPSERT_CONTACT_FLOW_BLOCK;
+import static com.dreamsportslabs.guardian.dao.query.UserFlowBlockSql.GET_ACTIVE_FLOW_BLOCKS_BY_USER_IDENTIFIER;
+import static com.dreamsportslabs.guardian.dao.query.UserFlowBlockSql.GET_FLOW_BLOCK_REASON_BATCH;
+import static com.dreamsportslabs.guardian.dao.query.UserFlowBlockSql.UNBLOCK_USER_FLOW;
+import static com.dreamsportslabs.guardian.dao.query.UserFlowBlockSql.UPSERT_USER_FLOW_BLOCK;
 import static com.dreamsportslabs.guardian.exception.ErrorEnum.INTERNAL_SERVER_ERROR;
 
 import com.dreamsportslabs.guardian.client.MysqlClient;
-import com.dreamsportslabs.guardian.dao.model.ContactFlowBlockModel;
+import com.dreamsportslabs.guardian.dao.model.UserFlowBlockModel;
 import com.dreamsportslabs.guardian.utils.JsonUtils;
 import com.google.inject.Inject;
 import io.reactivex.rxjava3.core.Completable;
@@ -21,18 +21,18 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor(onConstructor_ = @__({@Inject}))
-public class ContactFlowBlockDao {
+public class UserFlowBlockDao {
 
   private final MysqlClient mysqlClient;
 
-  public Completable blockFlows(List<ContactFlowBlockModel> models) {
+  public Completable blockFlows(List<UserFlowBlockModel> models) {
     List<Tuple> batchParams =
         models.stream()
             .map(
                 model ->
                     Tuple.tuple()
                         .addValue(model.getTenantId())
-                        .addValue(model.getContact())
+                        .addValue(model.getUserIdentifier())
                         .addValue(model.getFlowName())
                         .addValue(model.getReason())
                         .addValue(model.getUnblockedAt())
@@ -41,50 +41,50 @@ public class ContactFlowBlockDao {
 
     return mysqlClient
         .getWriterPool()
-        .preparedQuery(UPSERT_CONTACT_FLOW_BLOCK)
+        .preparedQuery(UPSERT_USER_FLOW_BLOCK)
         .rxExecuteBatch(batchParams)
         .ignoreElement()
         .onErrorResumeNext(
             err -> {
-              log.error("Failed to block contact flows", err);
+              log.error("Failed to block user flows", err);
               return Completable.error(INTERNAL_SERVER_ERROR.getException(err));
             });
   }
 
-  public Completable unblockFlows(String tenantId, String contact, List<String> flowNames) {
+  public Completable unblockFlows(String tenantId, String userIdentifier, List<String> flowNames) {
     List<Tuple> batchParams =
         flowNames.stream()
-            .map(flowName -> Tuple.of(tenantId, contact, flowName))
+            .map(flowName -> Tuple.of(tenantId, userIdentifier, flowName))
             .collect(Collectors.toList());
 
     return mysqlClient
         .getWriterPool()
-        .preparedQuery(UNBLOCK_CONTACT_FLOW)
+        .preparedQuery(UNBLOCK_USER_FLOW)
         .rxExecuteBatch(batchParams)
         .ignoreElement();
   }
 
-  public Single<List<ContactFlowBlockModel>> getActiveFlowBlocksByContact(
-      String tenantId, String contact) {
+  public Single<List<UserFlowBlockModel>> getActiveFlowBlocksByUser(
+      String tenantId, String userIdentifier) {
     return mysqlClient
         .getReaderPool()
-        .preparedQuery(GET_ACTIVE_FLOW_BLOCKS_BY_CONTACT)
-        .rxExecute(Tuple.of(tenantId, contact))
-        .map(rows -> JsonUtils.rowSetToList(rows, ContactFlowBlockModel.class));
+        .preparedQuery(GET_ACTIVE_FLOW_BLOCKS_BY_USER_IDENTIFIER)
+        .rxExecute(Tuple.of(tenantId, userIdentifier))
+        .map(rows -> JsonUtils.rowSetToList(rows, UserFlowBlockModel.class));
   }
 
   public Single<BlockCheckResult> checkFlowBlockedWithReasonBatch(
-      String tenantId, List<String> contacts, String flowName) {
-    if (contacts.isEmpty()) {
+      String tenantId, List<String> userIdentifiers, String flowName) {
+    if (userIdentifiers.isEmpty()) {
       return Single.just(new BlockCheckResult(false, null));
     }
 
-    String placeholders = String.join(",", contacts.stream().map(c -> "?").toList());
+    String placeholders = String.join(",", userIdentifiers.stream().map(c -> "?").toList());
     String query = String.format(GET_FLOW_BLOCK_REASON_BATCH, placeholders);
 
     Tuple params = Tuple.tuple().addValue(tenantId).addValue(flowName);
-    for (String contact : contacts) {
-      params.addValue(contact);
+    for (String user : userIdentifiers) {
+      params.addValue(user);
     }
 
     return mysqlClient

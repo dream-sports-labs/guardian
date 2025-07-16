@@ -8,13 +8,13 @@ import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 
 @Data
-public class V1UnblockContactFlowRequestDto {
-  private String contact;
+public class V1UnblockUserFlowRequestDto {
+  private String userIdentifier;
   private List<String> unblockFlows;
 
   public void validate() {
-    if (StringUtils.isBlank(contact)) {
-      throw INVALID_REQUEST.getCustomException("Contact is required");
+    if (StringUtils.isBlank(userIdentifier)) {
+      throw INVALID_REQUEST.getCustomException("userIdentifier is required");
     }
 
     if (unblockFlows == null || unblockFlows.isEmpty()) {

@@ -9,9 +9,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ContactFlowBlockModel {
+public class UserFlowBlockModel {
   private String tenantId;
-  private String contact;
+  private String userIdentifier;
   private String flowName;
   private String reason;
   private Long unblockedAt;

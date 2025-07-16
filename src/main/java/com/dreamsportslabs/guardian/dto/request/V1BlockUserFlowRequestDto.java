@@ -9,15 +9,15 @@ import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 
 @Data
-public class V1BlockContactFlowRequestDto {
-  private String contact;
+public class V1BlockUserFlowRequestDto {
+  private String userIdentifier;
   private List<String> blockFlows;
   private String reason;
   private Long unblockedAt;
 
   public void validate() {
-    if (StringUtils.isBlank(contact)) {
-      throw INVALID_REQUEST.getCustomException("Contact is required");
+    if (StringUtils.isBlank(userIdentifier)) {
+      throw INVALID_REQUEST.getCustomException("userIdentifier is required");
     }
 
     if (blockFlows == null || blockFlows.isEmpty()) {

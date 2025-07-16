@@ -6,8 +6,8 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class V1ContactBlockedFlowsResponseDto {
-  private String contact;
+public class V1UserBlockedFlowsResponseDto {
+  private String userIdentifier;
   private List<String> blockedFlows;
   private int totalCount;
 }

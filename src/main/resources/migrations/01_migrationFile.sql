@@ -223,24 +223,24 @@ CREATE TABLE contact_verify_config
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci;
 
-CREATE TABLE contact_flow_blocks_config
+CREATE TABLE user_flow_block_config
 (
-    tenant_id    CHAR(10)     NOT NULL,
-    contact      VARCHAR(64)  NOT NULL,
-    flow_name    CHAR(20)  NOT NULL,
-    reason       VARCHAR(500),
-    unblocked_at BIGINT,
-    is_active    BOOLEAN      NOT NULL DEFAULT TRUE,
-    created_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    tenant_id           CHAR(10)        NOT NULL,
+    user_identifier     VARCHAR(64)     NOT NULL,
+    flow_name           CHAR(20)        NOT NULL,
+    reason              VARCHAR(500),
+    unblocked_at        BIGINT,
+    is_active           BOOLEAN         NOT NULL DEFAULT TRUE,
+    created_at          TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
-    CONSTRAINT fk_tenant_contact_flow_blocks_config FOREIGN KEY (tenant_id)
+    CONSTRAINT fk_tenant_user_flow_block_config FOREIGN KEY (tenant_id)
         REFERENCES tenant (id) ON DELETE CASCADE,
 
-    CONSTRAINT uk_tenant_contact_flow_active UNIQUE (tenant_id, contact, flow_name),
+    CONSTRAINT uk_tenant_user_flow UNIQUE (tenant_id, user_identifier, flow_name),
 
-    KEY `idx_contact_flow_blocks_tenant_contact` (`tenant_id`, `contact`, `is_active`),
-    KEY `idx_contact_flow_blocks_tenant_contact_flow` (`tenant_id`, `contact`, `flow_name`, `is_active`)
+    KEY idx_user_flow_block_tenant_user (tenant_id, user_identifier),
+    KEY idx_user_flow_block_tenant_user_flow (tenant_id, user_identifier, flow_name)
 
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4

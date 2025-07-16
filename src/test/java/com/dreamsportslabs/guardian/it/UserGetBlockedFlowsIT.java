@@ -1,8 +1,8 @@
 package com.dreamsportslabs.guardian.it;
 
-import static com.dreamsportslabs.guardian.utils.ApplicationIoUtils.blockContactFlows;
+import static com.dreamsportslabs.guardian.utils.ApplicationIoUtils.blockUserFlows;
 import static com.dreamsportslabs.guardian.utils.ApplicationIoUtils.getBlockedFlows;
-import static com.dreamsportslabs.guardian.utils.ApplicationIoUtils.unblockContactFlows;
+import static com.dreamsportslabs.guardian.utils.ApplicationIoUtils.unblockUserFlows;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.apache.commons.lang3.RandomStringUtils.randomNumeric;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -17,7 +17,7 @@ import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-public class ContactGetBlockedFlowsIT {
+public class UserGetBlockedFlowsIT {
 
   private static final String TENANT_ID = "tenant1";
   private static final String EMAIL_CONTACT =
@@ -32,12 +32,12 @@ public class ContactGetBlockedFlowsIT {
     String contact = randomNumeric(10);
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> blockRequestBody = new HashMap<>();
-    blockRequestBody.put("contact", contact);
+    blockRequestBody.put("userIdentifier", contact);
     blockRequestBody.put("blockFlows", new String[] {Flow_1, Flow_2});
     blockRequestBody.put("reason", randomAlphanumeric(10));
     blockRequestBody.put("unblockedAt", unblockedAt);
 
-    Response blockResponse = blockContactFlows(TENANT_ID, blockRequestBody);
+    Response blockResponse = blockUserFlows(TENANT_ID, blockRequestBody);
     blockResponse.then().statusCode(HttpStatus.SC_OK);
 
     // Act
@@ -46,7 +46,7 @@ public class ContactGetBlockedFlowsIT {
     // Assert
     response.then().statusCode(HttpStatus.SC_OK);
 
-    assertThat(response.getBody().jsonPath().getString("contact"), equalTo(contact));
+    assertThat(response.getBody().jsonPath().getString("userIdentifier"), equalTo(contact));
     assertThat(response.getBody().jsonPath().getInt("totalCount"), equalTo(2));
 
     List<String> blockedFlows = response.getBody().jsonPath().getList("blockedFlows");
@@ -56,17 +56,17 @@ public class ContactGetBlockedFlowsIT {
   }
 
   @Test
-  @DisplayName("Should get blocked Flows successfully with email contact")
+  @DisplayName("Should get blocked Flows successfully with email userIdentifier")
   public void getBlockedFlows_emailContact_success() {
     // Arrange
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> blockRequestBody = new HashMap<>();
-    blockRequestBody.put("contact", EMAIL_CONTACT);
+    blockRequestBody.put("userIdentifier", EMAIL_CONTACT);
     blockRequestBody.put("blockFlows", new String[] {Flow_1});
     blockRequestBody.put("reason", randomAlphanumeric(10));
     blockRequestBody.put("unblockedAt", unblockedAt);
 
-    Response blockResponse = blockContactFlows(TENANT_ID, blockRequestBody);
+    Response blockResponse = blockUserFlows(TENANT_ID, blockRequestBody);
     blockResponse.then().statusCode(HttpStatus.SC_OK);
 
     // Act
@@ -75,7 +75,7 @@ public class ContactGetBlockedFlowsIT {
     // Assert
     response.then().statusCode(HttpStatus.SC_OK);
 
-    assertThat(response.getBody().jsonPath().getString("contact"), equalTo(EMAIL_CONTACT));
+    assertThat(response.getBody().jsonPath().getString("userIdentifier"), equalTo(EMAIL_CONTACT));
     assertThat(response.getBody().jsonPath().getInt("totalCount"), equalTo(1));
 
     List<String> blockedFlows = response.getBody().jsonPath().getList("blockedFlows");
@@ -95,7 +95,7 @@ public class ContactGetBlockedFlowsIT {
     // Assert
     response.then().statusCode(HttpStatus.SC_OK);
 
-    assertThat(response.getBody().jsonPath().getString("contact"), equalTo(contact));
+    assertThat(response.getBody().jsonPath().getString("userIdentifier"), equalTo(contact));
     assertThat(response.getBody().jsonPath().getInt("totalCount"), equalTo(0));
 
     List<String> blockedFlows = response.getBody().jsonPath().getList("blockedFlows");
@@ -121,7 +121,7 @@ public class ContactGetBlockedFlowsIT {
   }
 
   @Test
-  @DisplayName("Should handle very long contact ID")
+  @DisplayName("Should handle very long userIdentifier ID")
   public void getBlockedFlows_longcontact_success() {
     // Arrange
     String longcontact = "a".repeat(1000);
@@ -132,7 +132,7 @@ public class ContactGetBlockedFlowsIT {
     // Assert
     response.then().statusCode(HttpStatus.SC_OK);
 
-    assertThat(response.getBody().jsonPath().getString("contact"), equalTo(longcontact));
+    assertThat(response.getBody().jsonPath().getString("userIdentifier"), equalTo(longcontact));
     assertThat(response.getBody().jsonPath().getInt("totalCount"), equalTo(0));
 
     List<String> blockedFlows = response.getBody().jsonPath().getList("blockedFlows");
@@ -146,27 +146,27 @@ public class ContactGetBlockedFlowsIT {
     String contact = randomNumeric(10);
     Long unblockedAt = Instant.now().plusSeconds(3600).toEpochMilli() / 1000;
     Map<String, Object> blockRequestBody = new HashMap<>();
-    blockRequestBody.put("contact", contact);
+    blockRequestBody.put("userIdentifier", contact);
     blockRequestBody.put("blockFlows", new String[] {Flow_1, Flow_2});
     blockRequestBody.put("reason", randomAlphanumeric(10));
     blockRequestBody.put("unblockedAt", unblockedAt);
 
-    Response blockResponse = blockContactFlows(TENANT_ID, blockRequestBody);
+    Response blockResponse = blockUserFlows(TENANT_ID, blockRequestBody);
     blockResponse.then().statusCode(HttpStatus.SC_OK);
 
     // Verify
     Response initialResponse = getBlockedFlows(TENANT_ID, contact);
     initialResponse.then().statusCode(HttpStatus.SC_OK);
-    assertThat(initialResponse.getBody().jsonPath().getString("contact"), equalTo(contact));
+    assertThat(initialResponse.getBody().jsonPath().getString("userIdentifier"), equalTo(contact));
     assertThat(initialResponse.getBody().jsonPath().getInt("totalCount"), equalTo(2));
 
     // Act
     Map<String, Object> unblockRequestBody = new HashMap<>();
-    unblockRequestBody.put("contact", contact);
+    unblockRequestBody.put("userIdentifier", contact);
     unblockRequestBody.put("unblockFlows", new String[] {Flow_1});
 
     // verify
-    Response unblockResponse = unblockContactFlows(TENANT_ID, unblockRequestBody);
+    Response unblockResponse = unblockUserFlows(TENANT_ID, unblockRequestBody);
     unblockResponse.then().statusCode(HttpStatus.SC_OK);
 
     // Act
@@ -175,7 +175,7 @@ public class ContactGetBlockedFlowsIT {
     // Assert
     response.then().statusCode(HttpStatus.SC_OK);
 
-    assertThat(response.getBody().jsonPath().getString("contact"), equalTo(contact));
+    assertThat(response.getBody().jsonPath().getString("userIdentifier"), equalTo(contact));
     assertThat(response.getBody().jsonPath().getInt("totalCount"), equalTo(1));
 
     List<String> blockedFlows = response.getBody().jsonPath().getList("blockedFlows");

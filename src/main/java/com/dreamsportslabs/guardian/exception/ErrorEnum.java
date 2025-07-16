@@ -26,7 +26,7 @@ public enum ErrorEnum {
 
   USER_EXISTS("user_exists", "User already exists", 400),
   USER_NOT_EXISTS("user_not_exists", "User does not exist", 400),
-  FLOW_BLOCKED("flow_blocked", "API is blocked for this contact", 403);
+  FLOW_BLOCKED("flow_blocked", "API is blocked for this userIdentifier", 403);
 
   private final String code;
   private final String message;

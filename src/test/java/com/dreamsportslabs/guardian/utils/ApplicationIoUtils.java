@@ -169,29 +169,29 @@ public class ApplicationIoUtils {
     return execute(body, headers, new HashMap<>(), spec -> spec.post("/v1/keys/generate"));
   }
 
-  public static Response blockContactFlows(String tenantId, Map<String, Object> body) {
+  public static Response blockUserFlows(String tenantId, Map<String, Object> body) {
     Map<String, String> headers = new HashMap<>();
     headers.put(HEADER_TENANT_ID, tenantId);
     headers.put(CONTENT_TYPE, "application/json");
 
-    return execute(body, headers, new HashMap<>(), spec -> spec.post("/v1/contact/block"));
+    return execute(body, headers, new HashMap<>(), spec -> spec.post("/v1/user/flow/block"));
   }
 
-  public static Response unblockContactFlows(String tenantId, Map<String, Object> body) {
+  public static Response unblockUserFlows(String tenantId, Map<String, Object> body) {
     Map<String, String> headers = new HashMap<>();
     headers.put(HEADER_TENANT_ID, tenantId);
     headers.put(CONTENT_TYPE, "application/json");
 
-    return execute(body, headers, new HashMap<>(), spec -> spec.post("/v1/contact/unblock"));
+    return execute(body, headers, new HashMap<>(), spec -> spec.post("/v1/user/flow/unblock"));
   }
 
-  public static Response getBlockedFlows(String tenantId, String contactId) {
+  public static Response getBlockedFlows(String tenantId, String userIdentifier) {
     Map<String, String> headers = new HashMap<>();
     headers.put(HEADER_TENANT_ID, tenantId);
 
     Map<String, String> queryParams = new HashMap<>();
-    queryParams.put("contact", contactId);
+    queryParams.put("userIdentifier", userIdentifier);
 
-    return execute(null, headers, queryParams, spec -> spec.get("/v1/contact/blocked-flows"));
+    return execute(null, headers, queryParams, spec -> spec.get("/v1/user/flow/blocked"));
   }
 }

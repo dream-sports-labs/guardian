@@ -33,7 +33,7 @@ public class ContactVerifyService {
   private final ContactVerifyDao contactVerifyDao;
   private final Registry registry;
   private final OtpService otpService;
-  private final ContactFlowBlockService contactFlowBlockService;
+  private final UserFlowBlockService userFlowBlockService;
 
   public Single<OtpGenerateModel> initOtp(
       V1SendOtpRequestDto requestDto, MultivaluedMap<String, String> headers, String tenantId) {
@@ -41,18 +41,18 @@ public class ContactVerifyService {
     return getContactIdentifier(requestDto, tenantId)
         .flatMap(
             contactIdentifier ->
-                contactFlowBlockService
-                    .checkApiBlockedWithReason(tenantId, contactIdentifier, "/v1/otp/send")
+                userFlowBlockService
+                    .isUserBlocked(contactIdentifier, tenantId, "otp_verify")
                     .flatMap(
-                        result -> {
-                          if (result.isBlocked()) {
+                        blockedResult -> {
+                          if (blockedResult.isBlocked()) {
                             log.warn(
-                                "OTP send API is blocked for contact: {} in tenant: {} with reason: {}",
+                                "OTP send API is blocked for userIdentifier: {} in tenant: {} with reason: {}",
                                 contactIdentifier,
                                 tenantId,
-                                result.getReason());
+                                blockedResult.getReason());
                             return Single.error(
-                                FLOW_BLOCKED.getCustomException(result.getReason()));
+                                FLOW_BLOCKED.getCustomException(blockedResult.getReason()));
                           }
                           return Single.just(requestDto);
                         }))
@@ -149,19 +149,19 @@ public class ContactVerifyService {
         .flatMap(
             model -> {
               String contactIdentifier = model.getContact().getIdentifier();
-              return contactFlowBlockService
-                  .checkApiBlockedWithReason(tenantId, contactIdentifier, "/v1/otp/verify")
-                  .flatMap(
-                      result -> {
-                        if (result.isBlocked()) {
+              return userFlowBlockService
+                  .isUserBlocked(contactIdentifier, tenantId, "otp_verify")
+                  .map(
+                      blockedResult -> {
+                        if (blockedResult.isBlocked()) {
                           log.warn(
-                              "OTP verify API is blocked for contact: {} in tenant: {} with reason: {}",
+                              "OTP verify API is blocked for userIdentifier: {} in tenant: {} with reason: {}",
                               contactIdentifier,
                               tenantId,
-                              result.getReason());
-                          return Single.error(FLOW_BLOCKED.getCustomException(result.getReason()));
+                              blockedResult.getReason());
+                          throw FLOW_BLOCKED.getCustomException(blockedResult.getReason());
                         }
-                        return Single.just(model);
+                        return model;
                       })
                   .flatMap(
                       otpModel -> {
