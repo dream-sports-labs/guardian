@@ -48,7 +48,6 @@ public class AuthorizationService {
   private final RefreshTokenDao refreshTokenDao;
   private final CodeDao codeDao;
   private final RevocationDao revocationDao;
-  private final SessionCleanupService sessionCleanupService;
 
   public Single<Object> generate(
       JsonObject user, String responseType, MetaInfo metaInfo, String tenantId) {
@@ -166,8 +165,7 @@ public class AuthorizationService {
                     .invalidateAllRefreshTokensForUser(userId, tenantId)
                     .andThen(Single.just(list)))
         .doOnSuccess(tokens -> updateRevocations(tokens, tenantId))
-        .ignoreElement()
-        .andThen(sessionCleanupService.cleanupAllUserSessions(userId, tenantId));
+        .ignoreElement();
   }
 
   private Completable invalidateRefreshToken(V1LogoutRequestDto dto, String tenantId) {
