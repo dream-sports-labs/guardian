@@ -9,6 +9,7 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriBuilder;
 import java.net.URI;
+import java.util.Map;
 import lombok.Getter;
 
 @Getter
@@ -21,7 +22,7 @@ public enum OidcErrorEnum {
       "unauthorized_client",
       "The client is not authorized to request an authorization code using this method",
       302),
-  INVALID_CLIENT("invalid_client", "Client authentication failed", 400),
+  INVALID_CLIENT("invalid_client", "Client authentication failed", 401),
   INVALID_REDIRECT_URI("invalid_redirect_uri", "Redirect uri is invalid", 400),
   ACCESS_DENIED(
       "access_denied", "The resource owner or authorization server denied the request", 302),
@@ -38,6 +39,11 @@ public enum OidcErrorEnum {
       "temporarily_unavailable",
       "The authorization server is currently unable to handle the request due to a temporary overloading or maintenance of the server",
       302),
+  UNSUPPORTED_GRANT_TYPE(
+      "unsupported_grant_type",
+      "The authorization grant type is not supported by the authorization server.",
+      400),
+  INVALID_GRANT("invalid_grant", "The authorization grant is invalid", 400),
   INTERNAL_SERVER_ERROR("internal_server_error", "Something went wrong", 500);
 
   private final String error;
@@ -109,6 +115,19 @@ public enum OidcErrorEnum {
             .entity(new OidcErrorEntity(this.error, this.errorDescription))
             .build();
     return new WebApplicationException(response);
+  }
+
+  public WebApplicationException getJsonCustomException(
+      String message, Map<String, String> additionalHeaders) {
+    message = message == null ? this.errorDescription : message;
+    Response.ResponseBuilder responsebuilder =
+        Response.status(this.httpStatus)
+            .header("Content-Type", "application/json")
+            .entity(new OidcErrorEntity(this.error, message));
+    for (Map.Entry<String, String> entry : additionalHeaders.entrySet()) {
+      responsebuilder.header(entry.getKey(), entry.getValue());
+    }
+    return new WebApplicationException(responsebuilder.build());
   }
 
   @Getter

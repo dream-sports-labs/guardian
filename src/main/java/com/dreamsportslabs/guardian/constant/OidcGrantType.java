@@ -13,4 +13,13 @@ public enum OidcGrantType {
   OidcGrantType(String type) {
     this.type = type;
   }
+
+  public static OidcGrantType fromString(String type) {
+    for (OidcGrantType grantType : values()) {
+      if (grantType.type.equals(type)) {
+        return grantType;
+      }
+    }
+    throw new IllegalArgumentException("Invalid OIDC Grant Type: " + type);
+  }
 }
