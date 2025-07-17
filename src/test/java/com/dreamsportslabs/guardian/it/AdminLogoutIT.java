@@ -14,8 +14,6 @@ import com.dreamsportslabs.guardian.utils.DbUtils;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,8 +27,8 @@ class AdminLogoutIT {
   private static final String ADMIN_PASSWORD = "admin123";
   private static final String VALID_USER_ID = "test-user-123";
   private static final String INVALID_USER_ID = randomAlphanumeric(10);
-  private static final String OTHER_TENANT_ADMIN_USERNAME = "admin2";
-  private static final String OTHER_TENANT_ADMIN_PASSWORD = "admin456";
+  private static final String SECOND_TENANT_ADMIN_USERNAME = "admin2";
+  private static final String SECOND_TENANT_ADMIN_PASSWORD = "admin456";
 
   private String validAuthHeader;
   private String invalidAuthHeader;
@@ -46,7 +44,8 @@ class AdminLogoutIT {
     invalidAuthHeader =
         "Basic " + Base64.getEncoder().encodeToString(invalidCredentials.getBytes());
 
-    String otherTenantCredentials = OTHER_TENANT_ADMIN_USERNAME + ":" + OTHER_TENANT_ADMIN_PASSWORD;
+    String otherTenantCredentials =
+        SECOND_TENANT_ADMIN_USERNAME + ":" + SECOND_TENANT_ADMIN_PASSWORD;
     otherTenantAuthHeader =
         "Basic " + Base64.getEncoder().encodeToString(otherTenantCredentials.getBytes());
   }
@@ -142,11 +141,10 @@ class AdminLogoutIT {
   @DisplayName("Should return 400 when userId is missing")
   void testAdminLogoutWithMissingUserId() {
     // Arrange
-    Map<String, Object> body = new HashMap<>();
-    body.put(randomAlphanumeric(5), randomAlphanumeric(10));
+    String userId = null;
 
     // Act & Assert
-    ApplicationIoUtils.adminLogout(TENANT_ID, validAuthHeader, body)
+    ApplicationIoUtils.adminLogout(TENANT_ID, validAuthHeader, userId)
         .then()
         .statusCode(SC_BAD_REQUEST)
         .rootPath(ERROR)

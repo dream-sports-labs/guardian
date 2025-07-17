@@ -139,18 +139,9 @@ public class ApplicationIoUtils {
     headers.put(CONTENT_TYPE, "application/json");
 
     Map<String, Object> body = new HashMap<>();
-    body.put("userId", userId);
-
-    return execute(body, headers, new HashMap<>(), spec -> spec.post("/v1/admin/logout"));
-  }
-
-  public static Response adminLogout(String tenantId, String authHeader, Map<String, Object> body) {
-    Map<String, String> headers = new HashMap<>();
-    headers.put(HEADER_TENANT_ID, tenantId);
-    if (authHeader != null) {
-      headers.put("Authorization", authHeader);
+    if (userId != null) {
+      body.put("userId", userId);
     }
-    headers.put(CONTENT_TYPE, "application/json");
 
     return execute(body, headers, new HashMap<>(), spec -> spec.post("/v1/admin/logout"));
   }
