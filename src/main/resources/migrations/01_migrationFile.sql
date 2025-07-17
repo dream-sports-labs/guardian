@@ -239,8 +239,7 @@ CREATE TABLE user_flow_block_config
 
     CONSTRAINT uk_tenant_user_flow UNIQUE (tenant_id, user_identifier, flow_name),
 
-    KEY idx_user_flow_block_tenant_user (tenant_id, user_identifier),
-    KEY idx_user_flow_block_tenant_user_flow (tenant_id, user_identifier, flow_name)
+    KEY idx_user_flow_block_tenant_user_flow (tenant_id, user_identifier, flow_name, unblocked_at)
 
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4

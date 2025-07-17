@@ -1,8 +1,8 @@
 package com.dreamsportslabs.guardian.rest;
 
 import static com.dreamsportslabs.guardian.constant.Constants.TENANT_ID;
+import static com.dreamsportslabs.guardian.exception.ErrorEnum.INVALID_QUERY_PARAM;
 
-import com.dreamsportslabs.guardian.dao.model.UserFlowBlockModel;
 import com.dreamsportslabs.guardian.dto.request.V1BlockUserFlowRequestDto;
 import com.dreamsportslabs.guardian.dto.request.V1UnblockUserFlowRequestDto;
 import com.dreamsportslabs.guardian.dto.response.V1BlockUserFlowResponseDto;
@@ -20,10 +20,10 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import java.util.List;
 import java.util.concurrent.CompletionStage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 @Slf4j
 @Path("/v1/user/flow")
@@ -82,18 +82,19 @@ public class UserBlockFlow {
       @HeaderParam(TENANT_ID) String tenantId,
       @QueryParam("userIdentifier") String userIdentifier) {
 
+    if (StringUtils.isBlank(userIdentifier)) {
+      throw INVALID_QUERY_PARAM.getCustomException("userIdentifier is required");
+    }
+
     return userFlowBlockService
         .getActiveFlowsBlockedForUser(tenantId, userIdentifier)
         .map(
-            activeBlocks -> {
-              List<String> blockedFlows =
-                  activeBlocks.stream().map(UserFlowBlockModel::getFlowName).toList();
-
+            activeBlockFlows -> {
               V1UserBlockedFlowsResponseDto responseDto =
                   V1UserBlockedFlowsResponseDto.builder()
                       .userIdentifier(userIdentifier)
-                      .blockedFlows(blockedFlows)
-                      .totalCount(blockedFlows.size())
+                      .blockedFlows(activeBlockFlows)
+                      .totalCount(activeBlockFlows.size())
                       .build();
 
               return Response.ok(responseDto).build();

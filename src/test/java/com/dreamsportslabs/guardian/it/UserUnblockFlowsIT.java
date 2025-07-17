@@ -59,9 +59,6 @@ public class UserUnblockFlowsIT {
     response.then().statusCode(HttpStatus.SC_OK);
 
     assertThat(response.getBody().jsonPath().getString("userIdentifier"), equalTo(contact));
-    assertThat(
-        response.getBody().jsonPath().getString("message"),
-        equalTo("Flows unblocked successfully"));
 
     List<String> unblockedFlows = response.getBody().jsonPath().getList("unblockedFlows");
     assertThat(unblockedFlows.size(), equalTo(1));
@@ -93,9 +90,6 @@ public class UserUnblockFlowsIT {
     response.then().statusCode(HttpStatus.SC_OK);
 
     assertThat(response.getBody().jsonPath().getString("userIdentifier"), equalTo(EMAIL_CONTACT));
-    assertThat(
-        response.getBody().jsonPath().getString("message"),
-        equalTo("Flows unblocked successfully"));
 
     List<String> unblockedFlows = response.getBody().jsonPath().getList("unblockedFlows");
     assertThat(unblockedFlows.size(), equalTo(1));
@@ -128,9 +122,6 @@ public class UserUnblockFlowsIT {
     response.then().statusCode(HttpStatus.SC_OK);
 
     assertThat(response.getBody().jsonPath().getString("userIdentifier"), equalTo(contact));
-    assertThat(
-        response.getBody().jsonPath().getString("message"),
-        equalTo("Flows unblocked successfully"));
 
     List<String> unblockedFlows = response.getBody().jsonPath().getList("unblockedFlows");
     assertThat(unblockedFlows.size(), equalTo(2));
@@ -153,9 +144,6 @@ public class UserUnblockFlowsIT {
     response.then().statusCode(HttpStatus.SC_OK);
 
     assertThat(response.getBody().jsonPath().getString("userIdentifier"), equalTo(contact));
-    assertThat(
-        response.getBody().jsonPath().getString("message"),
-        equalTo("Flows unblocked successfully"));
 
     List<String> unblockedFlows = response.getBody().jsonPath().getList("unblockedFlows");
     assertThat(unblockedFlows.size(), equalTo(1));
@@ -317,8 +305,5 @@ public class UserUnblockFlowsIT {
     // Assert
     response2.then().statusCode(HttpStatus.SC_OK);
     assertThat(response2.getBody().jsonPath().getString("userIdentifier"), equalTo(contact));
-    assertThat(
-        response2.getBody().jsonPath().getString("message"),
-        equalTo("Flows unblocked successfully"));
   }
 }

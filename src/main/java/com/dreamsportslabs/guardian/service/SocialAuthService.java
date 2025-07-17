@@ -20,6 +20,7 @@ import static com.dreamsportslabs.guardian.exception.ErrorEnum.FLOW_BLOCKED;
 import static com.dreamsportslabs.guardian.exception.ErrorEnum.USER_EXISTS;
 import static com.dreamsportslabs.guardian.exception.ErrorEnum.USER_NOT_EXISTS;
 
+import com.dreamsportslabs.guardian.constant.BlockFlow;
 import com.dreamsportslabs.guardian.constant.Flow;
 import com.dreamsportslabs.guardian.dto.Provider;
 import com.dreamsportslabs.guardian.dto.UserDto;
@@ -32,6 +33,7 @@ import com.google.inject.Inject;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.json.JsonObject;
 import jakarta.ws.rs.core.MultivaluedMap;
+import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -65,7 +67,7 @@ public class SocialAuthService {
               String email = fbUserData.getString(FACEBOOK_FIELDS_EMAIL);
               if (email != null) {
                 return userFlowBlockService
-                    .isUserBlocked(email, tenantId, "social_auth")
+                    .isFlowBlocked(tenantId, List.of(email), BlockFlow.SOCIAL_AUTH)
                     .map(
                         blockedResult -> {
                           if (blockedResult.isBlocked()) {
@@ -161,7 +163,7 @@ public class SocialAuthService {
               String email = googleUserData.getString(OIDC_CLAIMS_EMAIL);
               if (email != null) {
                 return userFlowBlockService
-                    .isUserBlocked(email, tenantId, "social_auth")
+                    .isFlowBlocked(tenantId, List.of(email), BlockFlow.SOCIAL_AUTH)
                     .map(
                         result -> {
                           if (result.isBlocked()) {

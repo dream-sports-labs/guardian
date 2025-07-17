@@ -15,6 +15,7 @@ public enum ErrorEnum {
   USER_SERVICE_ERROR("user_service_error", "User service error", 500),
   SMS_SERVICE_ERROR("sms_service_error", "SMS service error", 500),
   EMAIL_SERVICE_ERROR("email_service_error", "Email service error", 500),
+  INVALID_QUERY_PARAM("invalid_query_param", "Invalid query param", 400),
 
   INVALID_CODE("invalid_code", "Invalid code", 400),
 

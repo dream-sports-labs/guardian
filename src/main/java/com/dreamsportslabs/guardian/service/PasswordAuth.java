@@ -2,12 +2,14 @@ package com.dreamsportslabs.guardian.service;
 
 import static com.dreamsportslabs.guardian.exception.ErrorEnum.FLOW_BLOCKED;
 
+import com.dreamsportslabs.guardian.constant.BlockFlow;
 import com.dreamsportslabs.guardian.dto.UserDto;
 import com.dreamsportslabs.guardian.dto.request.V1SignInRequestDto;
 import com.dreamsportslabs.guardian.dto.request.V1SignUpRequestDto;
 import com.google.inject.Inject;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.core.MultivaluedMap;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -22,7 +24,7 @@ public class PasswordAuth {
       V1SignInRequestDto dto, MultivaluedMap<String, String> headers, String tenantId) {
 
     return userFlowBlockService
-        .isUserBlocked(dto, tenantId)
+        .isFlowBlocked(tenantId, List.of(dto.getUsername()), BlockFlow.PASSWORD)
         .flatMap(
             blockedResult -> {
               if (blockedResult.isBlocked()) {
@@ -52,7 +54,7 @@ public class PasswordAuth {
   public Single<Object> signUp(
       V1SignUpRequestDto dto, MultivaluedMap<String, String> headers, String tenantId) {
     return userFlowBlockService
-        .isUserBlocked(dto, tenantId)
+        .isFlowBlocked(tenantId, List.of(dto.getUsername()), BlockFlow.PASSWORD)
         .flatMap(
             blockedResult -> {
               if (blockedResult.isBlocked()) {

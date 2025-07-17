@@ -1,5 +1,6 @@
 package com.dreamsportslabs.guardian.service;
 
+import com.dreamsportslabs.guardian.constant.BlockFlow;
 import com.dreamsportslabs.guardian.constant.Contact;
 import com.dreamsportslabs.guardian.dao.UserFlowBlockDao;
 import com.dreamsportslabs.guardian.dao.model.PasswordlessModel;
@@ -53,13 +54,12 @@ public class UserFlowBlockService {
         .doOnError(error -> log.error("Error during unblock: {}", error.getMessage(), error));
   }
 
-  public Single<List<UserFlowBlockModel>> getActiveFlowsBlockedForUser(
-      String tenantId, String userIdentifier) {
+  public Single<List<String>> getActiveFlowsBlockedForUser(String tenantId, String userIdentifier) {
     return userFlowBlockDao.getActiveFlowBlocksByUser(tenantId, userIdentifier);
   }
 
   public Single<FlowBlockCheckResult> checkFlowBlockedWithReasonBatch(
-      String tenantId, List<String> userIdentifiers, String flowName) {
+      String tenantId, List<String> userIdentifiers, BlockFlow flowName) {
     return userFlowBlockDao
         .checkFlowBlockedWithReasonBatch(tenantId, userIdentifiers, flowName)
         .map(result -> new FlowBlockCheckResult(result.isBlocked(), result.getReason()));
@@ -76,44 +76,6 @@ public class UserFlowBlockService {
     }
   }
 
-  public Single<FlowBlockCheckResult> isUserBlocked(
-      V1SignInRequestDto requestDto, String tenantId) {
-
-    if (StringUtils.isBlank(requestDto.getUsername())) {
-      return Single.just(new FlowBlockCheckResult(false, null));
-    }
-
-    String username = requestDto.getUsername().trim();
-    return isFlowBlocked(tenantId, List.of(username), "password");
-  }
-
-  public Single<FlowBlockCheckResult> isUserBlocked(
-      V1SignUpRequestDto requestDto, String tenantId) {
-
-    if (StringUtils.isBlank(requestDto.getUsername())) {
-      return Single.just(new FlowBlockCheckResult(false, null));
-    }
-
-    String username = requestDto.getUsername().trim();
-
-    return isFlowBlocked(tenantId, List.of(username), "password");
-  }
-
-  public Single<FlowBlockCheckResult> isUserBlocked(
-      V1PasswordlessInitRequestDto requestDto, String tenantId) {
-    if (requestDto.getContacts() == null || requestDto.getContacts().isEmpty()) {
-      return Single.just(new FlowBlockCheckResult(false, null));
-    }
-
-    List<String> contacts =
-        requestDto.getContacts().stream()
-            .map(Contact::getIdentifier)
-            .filter(StringUtils::isNotBlank)
-            .toList();
-
-    return isFlowBlocked(tenantId, contacts, "passwordless");
-  }
-
   public Single<FlowBlockCheckResult> isUserBlocked(PasswordlessModel model, String tenantId) {
     if (model.getContacts() == null || model.getContacts().isEmpty()) {
       return Single.just(new FlowBlockCheckResult(false, null));
@@ -125,19 +87,11 @@ public class UserFlowBlockService {
             .filter(StringUtils::isNotBlank)
             .toList();
 
-    return isFlowBlocked(tenantId, contacts, "passwordless");
-  }
-
-  public Single<FlowBlockCheckResult> isUserBlocked(
-      String userIdentifier, String tenantId, String flow) {
-    if (StringUtils.isBlank(userIdentifier)) {
-      return Single.just(new FlowBlockCheckResult(false, null));
-    }
-    return isFlowBlocked(tenantId, List.of(userIdentifier), flow);
+    return isFlowBlocked(tenantId, contacts, BlockFlow.PASSWORDLESS);
   }
 
   public Single<FlowBlockCheckResult> isFlowBlocked(
-      String tenantId, List<String> userIdentifiers, String flow) {
+      String tenantId, List<String> userIdentifiers, BlockFlow flow) {
     return checkFlowBlockedWithReasonBatch(tenantId, userIdentifiers, flow)
         .doOnSuccess(
             result -> {

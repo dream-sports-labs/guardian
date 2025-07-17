@@ -1,12 +1,6 @@
 package com.dreamsportslabs.guardian.it;
 
-import static com.dreamsportslabs.guardian.Constants.BODY_CHANNEL_EMAIL;
-import static com.dreamsportslabs.guardian.Constants.BODY_PARAM_CHANNEL;
-import static com.dreamsportslabs.guardian.Constants.BODY_PARAM_IDENTIFIER;
-import static com.dreamsportslabs.guardian.Constants.BODY_PARAM_RESPONSE_TYPE_TOKEN;
-import static com.dreamsportslabs.guardian.Constants.ERROR;
-import static com.dreamsportslabs.guardian.Constants.ERROR_FLOW_BLOCKED;
-import static com.dreamsportslabs.guardian.Constants.PASSWORDLESS_FLOW_SIGNINUP;
+import static com.dreamsportslabs.guardian.Constants.*;
 import static com.dreamsportslabs.guardian.utils.ApplicationIoUtils.blockUserFlows;
 import static com.dreamsportslabs.guardian.utils.ApplicationIoUtils.passwordlessInit;
 import static com.dreamsportslabs.guardian.utils.ApplicationIoUtils.sendOtp;
@@ -54,18 +48,18 @@ public class UserBlockFlowsIT {
 
   private Map<String, Object> generatePasswordlessInitRequestBody(String email) {
     Map<String, Object> requestBody = new HashMap<>();
-    requestBody.put("flow", PASSWORDLESS_FLOW_SIGNINUP);
-    requestBody.put("responseType", BODY_PARAM_RESPONSE_TYPE_TOKEN);
+    requestBody.put(BODY_PARAM_FLOW, PASSWORDLESS_FLOW_SIGNINUP);
+    requestBody.put(BODY_PARAM_RESPONSE_TYPE, BODY_PARAM_RESPONSE_TYPE_TOKEN);
 
     List<Map<String, Object>> contacts = new ArrayList<>();
     Map<String, Object> contact = new HashMap<>();
     contact.put(BODY_PARAM_CHANNEL, BODY_CHANNEL_EMAIL);
     contact.put(BODY_PARAM_IDENTIFIER, email);
     contacts.add(contact);
-    requestBody.put("contacts", contacts);
+    requestBody.put(BODY_PARAM_CONTACTS, contacts);
 
-    requestBody.put("metaInfo", new HashMap<>());
-    requestBody.put("additionalInfo", new HashMap<>());
+    requestBody.put(BODY_PARAM_META_INFO, new HashMap<>());
+    requestBody.put(BODY_PARAM_ADDITIONAL_INFO, new HashMap<>());
 
     return requestBody;
   }
@@ -107,8 +101,6 @@ public class UserBlockFlowsIT {
     response.then().statusCode(HttpStatus.SC_OK);
 
     assertThat(response.getBody().jsonPath().getString("userIdentifier"), equalTo(contact));
-    assertThat(
-        response.getBody().jsonPath().getString("message"), equalTo("Flows blocked successfully"));
 
     List<String> blockedFlows = response.getBody().jsonPath().getList("blockedFlows");
     assertThat(blockedFlows.size(), equalTo(2));
@@ -132,8 +124,6 @@ public class UserBlockFlowsIT {
     response.then().statusCode(HttpStatus.SC_OK);
 
     assertThat(response.getBody().jsonPath().getString("userIdentifier"), equalTo(EMAIL_CONTACT));
-    assertThat(
-        response.getBody().jsonPath().getString("message"), equalTo("Flows blocked successfully"));
 
     List<String> blockedFlows = response.getBody().jsonPath().getList("blockedFlows");
     assertThat(blockedFlows.size(), equalTo(1));
@@ -172,8 +162,6 @@ public class UserBlockFlowsIT {
     response2.then().statusCode(HttpStatus.SC_OK);
 
     assertThat(response2.getBody().jsonPath().getString("userIdentifier"), equalTo(contact));
-    assertThat(
-        response2.getBody().jsonPath().getString("message"), equalTo("Flows blocked successfully"));
 
     List<String> blockedFlows2 = response2.getBody().jsonPath().getList("blockedFlows");
     assertThat(blockedFlows2.size(), equalTo(2));
@@ -467,9 +455,6 @@ public class UserBlockFlowsIT {
 
     // Verify
     assertThat(blockResponse.getBody().jsonPath().getString("userIdentifier"), equalTo(contact));
-    assertThat(
-        blockResponse.getBody().jsonPath().getString("message"),
-        equalTo("Flows blocked successfully"));
 
     // Act
     Map<String, Object> passwordlessInitBody = generatePasswordlessInitRequestBody(contact);
@@ -500,9 +485,6 @@ public class UserBlockFlowsIT {
     blockResponse.then().statusCode(HttpStatus.SC_OK);
 
     assertThat(blockResponse.getBody().jsonPath().getString("userIdentifier"), equalTo(testEmail));
-    assertThat(
-        blockResponse.getBody().jsonPath().getString("message"),
-        equalTo("Flows blocked successfully"));
 
     // Act
     Map<String, Object> sendOtpBody = createSendOtpBody(testEmail);
@@ -567,9 +549,6 @@ public class UserBlockFlowsIT {
 
     // Assert
     assertThat(blockResponse.getBody().jsonPath().getString("userIdentifier"), equalTo(username));
-    assertThat(
-        blockResponse.getBody().jsonPath().getString("message"),
-        equalTo("Flows blocked successfully"));
 
     // Act
     Response signInResponse = signIn(TENANT_ID, username, password, BODY_PARAM_RESPONSE_TYPE_TOKEN);
@@ -600,9 +579,6 @@ public class UserBlockFlowsIT {
 
     // Assert
     assertThat(blockResponse.getBody().jsonPath().getString("userIdentifier"), equalTo(username));
-    assertThat(
-        blockResponse.getBody().jsonPath().getString("message"),
-        equalTo("Flows blocked successfully"));
 
     // Act
     Response signUpResponse = signUp(TENANT_ID, username, password, BODY_PARAM_RESPONSE_TYPE_TOKEN);

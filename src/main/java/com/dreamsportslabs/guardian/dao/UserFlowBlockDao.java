@@ -7,12 +7,14 @@ import static com.dreamsportslabs.guardian.dao.query.UserFlowBlockSql.UPSERT_USE
 import static com.dreamsportslabs.guardian.exception.ErrorEnum.INTERNAL_SERVER_ERROR;
 
 import com.dreamsportslabs.guardian.client.MysqlClient;
+import com.dreamsportslabs.guardian.constant.BlockFlow;
 import com.dreamsportslabs.guardian.dao.model.UserFlowBlockModel;
-import com.dreamsportslabs.guardian.utils.JsonUtils;
 import com.google.inject.Inject;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
+import io.vertx.rxjava3.sqlclient.Row;
 import io.vertx.rxjava3.sqlclient.Tuple;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -64,17 +66,23 @@ public class UserFlowBlockDao {
         .ignoreElement();
   }
 
-  public Single<List<UserFlowBlockModel>> getActiveFlowBlocksByUser(
-      String tenantId, String userIdentifier) {
+  public Single<List<String>> getActiveFlowBlocksByUser(String tenantId, String userIdentifier) {
     return mysqlClient
         .getReaderPool()
         .preparedQuery(GET_ACTIVE_FLOW_BLOCKS_BY_USER_IDENTIFIER)
         .rxExecute(Tuple.of(tenantId, userIdentifier))
-        .map(rows -> JsonUtils.rowSetToList(rows, UserFlowBlockModel.class));
+        .map(
+            rowSet -> {
+              List<String> flowNames = new ArrayList<>();
+              for (Row row : rowSet) {
+                flowNames.add(row.getString("flowName"));
+              }
+              return flowNames;
+            });
   }
 
   public Single<BlockCheckResult> checkFlowBlockedWithReasonBatch(
-      String tenantId, List<String> userIdentifiers, String flowName) {
+      String tenantId, List<String> userIdentifiers, BlockFlow flowName) {
     if (userIdentifiers.isEmpty()) {
       return Single.just(new BlockCheckResult(false, null));
     }
@@ -82,7 +90,7 @@ public class UserFlowBlockDao {
     String placeholders = String.join(",", userIdentifiers.stream().map(c -> "?").toList());
     String query = String.format(GET_FLOW_BLOCK_REASON_BATCH, placeholders);
 
-    Tuple params = Tuple.tuple().addValue(tenantId).addValue(flowName);
+    Tuple params = Tuple.tuple().addValue(tenantId).addValue(flowName.getFlowName());
     for (String user : userIdentifiers) {
       params.addValue(user);
     }
