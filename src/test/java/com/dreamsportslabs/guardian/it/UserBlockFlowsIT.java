@@ -1,18 +1,16 @@
 package com.dreamsportslabs.guardian.it;
 
 import static com.dreamsportslabs.guardian.Constants.*;
-import static com.dreamsportslabs.guardian.utils.ApplicationIoUtils.blockUserFlows;
-import static com.dreamsportslabs.guardian.utils.ApplicationIoUtils.passwordlessInit;
-import static com.dreamsportslabs.guardian.utils.ApplicationIoUtils.sendOtp;
-import static com.dreamsportslabs.guardian.utils.ApplicationIoUtils.signIn;
-import static com.dreamsportslabs.guardian.utils.ApplicationIoUtils.signUp;
-import static com.dreamsportslabs.guardian.utils.ApplicationIoUtils.verifyOtp;
+import static com.dreamsportslabs.guardian.utils.ApplicationIoUtils.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.apache.commons.lang3.RandomStringUtils.randomNumeric;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import com.dreamsportslabs.guardian.Setup;
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.stubbing.StubMapping;
 import io.restassured.response.Response;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -34,6 +32,7 @@ public class UserBlockFlowsIT {
   private static final String SOCIAL_AUTH_FLOW = "social_auth";
   private static final String OTP_VERIFY_FLOW = "otp_verify";
   private static final String PASSWORD_FLOW = "password";
+  private WireMockServer wireMockServer;
 
   private Map<String, Object> generateBlockRequestBody(
       String userIdentifier, String[] blockFlows, String reason, Long unblockedAt) {
@@ -55,10 +54,19 @@ public class UserBlockFlowsIT {
     Map<String, Object> contact = new HashMap<>();
     contact.put(BODY_PARAM_CHANNEL, BODY_CHANNEL_EMAIL);
     contact.put(BODY_PARAM_IDENTIFIER, email);
+
+    // Add the required template field
+    Map<String, Object> template = new HashMap<>();
+    template.put(BODY_PARAM_NAME, "otp");
+    contact.put(BODY_PARAM_TEMPLATE, template);
+
     contacts.add(contact);
     requestBody.put(BODY_PARAM_CONTACTS, contacts);
 
-    requestBody.put(BODY_PARAM_META_INFO, new HashMap<>());
+    // Add metaInfo with device name like in PasswordlessInitIT
+    Map<String, Object> metaInfo = new HashMap<>();
+    metaInfo.put(BODY_PARAM_DEVICE_NAME, "testDevice");
+    requestBody.put(BODY_PARAM_META_INFO, metaInfo);
     requestBody.put(BODY_PARAM_ADDITIONAL_INFO, new HashMap<>());
 
     return requestBody;
@@ -79,6 +87,26 @@ public class UserBlockFlowsIT {
     requestBody.put("state", state);
     requestBody.put("otp", otp);
     return requestBody;
+  }
+
+  private StubMapping getStubForNonExistingUser() {
+    return wireMockServer.stubFor(
+        get(urlPathMatching("/user"))
+            .willReturn(
+                aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json")
+                    .withBody("{}")));
+  }
+
+  private StubMapping getStubForSendEmail() {
+    return wireMockServer.stubFor(
+        post(urlPathMatching("/sendEmail"))
+            .willReturn(
+                aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json")
+                    .withBody("{}")));
   }
 
   @Test
@@ -449,6 +477,10 @@ public class UserBlockFlowsIT {
     Map<String, Object> requestBody =
         generateBlockRequestBody(contact, new String[] {PASSWORDLESS_FLOW}, reason, unblockedAt);
 
+    // Set up WireMock stubs
+    StubMapping userStub = getStubForNonExistingUser();
+    StubMapping emailStub = getStubForSendEmail();
+
     // Act
     Response blockResponse = blockUserFlows(TENANT_ID, requestBody);
     blockResponse.then().statusCode(HttpStatus.SC_OK);
@@ -467,6 +499,10 @@ public class UserBlockFlowsIT {
         .rootPath(ERROR)
         .body("code", equalTo(ERROR_FLOW_BLOCKED))
         .body("message", equalTo(reason));
+
+    // Cleanup
+    wireMockServer.removeStub(userStub);
+    wireMockServer.removeStub(emailStub);
   }
 
   // TODO: implement the social auth flow blocking test for both facebook and google

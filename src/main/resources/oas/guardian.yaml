@@ -534,14 +534,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /v1/contact/block:
+  /v1/user/flow/block:
     post:
       tags:
-        - Contact Flow Block
-      summary: Block contact flows
+        - User Flow Block
+      summary: Block user flows
       description: |
-        API to block specific authentication flows for a contact (email/phone). 
-        This prevents the contact from using the specified authentication methods.
+        API to block specific authentication flows for a user identifier (email/phone/username). 
+        This prevents the user from using the specified authentication methods.
         
         Supported flow types:
         - passwordless: Blocks passwordless authentication flows
@@ -554,15 +554,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/V1BlockContactFlowRequestBody'
+              $ref: '#/components/schemas/V1BlockUserFlowRequestBody'
         required: true
       responses:
         '200':
-          description: Contact flows blocked successfully
+          description: User flows blocked successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/V1BlockContactFlowResponse'
+                $ref: '#/components/schemas/V1BlockUserFlowResponse'
         '400':
           description: Bad Request due to missing parameters or invalid data
           content:
@@ -576,29 +576,29 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /v1/contact/unblock:
+  /v1/user/flow/unblock:
     post:
       tags:
-        - Contact Flow Block
-      summary: Unblock contact flows
+        - User Flow Block
+      summary: Unblock user flows
       description: |
-        API to unblock previously blocked authentication flows for a contact.
-        This allows the contact to use the specified authentication methods again.
+        API to unblock previously blocked authentication flows for a user identifier.
+        This allows the user to use the specified authentication methods again.
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/V1UnblockContactFlowRequestBody'
+              $ref: '#/components/schemas/V1UnblockUserFlowRequestBody'
         required: true
       responses:
         '200':
-          description: Contact flows unblocked successfully
+          description: User flows unblocked successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/V1UnblockContactFlowResponse'
+                $ref: '#/components/schemas/V1UnblockUserFlowResponse'
         '400':
           description: Bad Request due to missing parameters or invalid data
           content:
@@ -612,19 +612,19 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /v1/contact/{contactId}/blocked-flows:
+  /v1/user/flow/blocked:
     get:
       tags:
-        - Contact Flow Block
-      summary: Get blocked flows for a contact
+        - User Flow Block
+      summary: Get blocked flows for a user
       description: |
-        API to retrieve all currently blocked authentication flows for a specific contact.
-        Returns the list of flow types that are currently blocked for the contact.
+        API to retrieve all currently blocked authentication flows for a specific user identifier.
+        Returns the list of flow types that are currently blocked for the user.
       parameters:
         - $ref: '#/components/parameters/TenantIdHeader'
-        - name: contactId
-          in: path
-          description: Contact identifier (email, phone number, username)
+        - name: userIdentifier
+          in: query
+          description: User identifier (email, phone number, username)
           required: true
           schema:
             type: string
@@ -634,7 +634,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/V1ContactBlockedFlowsResponse'
+                $ref: '#/components/schemas/V1UserBlockedFlowsResponse'
         '400':
           description: Bad Request due to missing parameters or invalid data
           content:
@@ -961,17 +961,17 @@ components:
           format: base64url
           description: Exponent of the RSA public key
           example: "AQAB"
-    V1BlockContactFlowRequestBody:
+    V1BlockUserFlowRequestBody:
       type: object
       required:
-        - contact
+        - userIdentifier
         - blockFlows
         - reason
         - unblockedAt
       properties:
-        contact:
+        userIdentifier:
           type: string
-          description: Contact identifier (email, phone number, username)
+          description: User identifier (email, phone number, username)
           example: "user@example.com"
         blockFlows:
           type: array
@@ -990,17 +990,17 @@ components:
           description: Unix timestamp when the block should automatically expire(epoch)
           example: 1704067200
       example:
-        contact: "user@example.com"
+        userIdentifier: "user@example.com"
         blockFlows: ["passwordless", "social_auth"]
         reason: "Suspicious activity detected"
         unblockedAt: 1704067200
 
-    V1BlockContactFlowResponse:
+    V1BlockUserFlowResponse:
       type: object
       properties:
-        contact:
+        userIdentifier:
           type: string
-          description: Contact identifier that was blocked
+          description: User identifier that was blocked
           example: "user@example.com"
         blockedFlows:
           type: array
@@ -1013,19 +1013,19 @@ components:
           description: Success message
           example: "Flows blocked successfully"
       example:
-        contact: "user@example.com"
+        userIdentifier: "user@example.com"
         blockedFlows: ["passwordless", "social_auth"]
         message: "Flows blocked successfully"
 
-    V1UnblockContactFlowRequestBody:
+    V1UnblockUserFlowRequestBody:
       type: object
       required:
-        - contact
+        - userIdentifier
         - unblockFlows
       properties:
-        contact:
+        userIdentifier:
           type: string
-          description: Contact identifier (email, phone number, username)
+          description: User identifier (email, phone number, username)
           example: "user@example.com"
         unblockFlows:
           type: array
@@ -1035,15 +1035,15 @@ components:
           description: List of flow types to unblock
           example: ["passwordless", "social_auth"]
       example:
-        contact: "user@example.com"
+        userIdentifier: "user@example.com"
         unblockFlows: ["passwordless", "social_auth"]
 
-    V1UnblockContactFlowResponse:
+    V1UnblockUserFlowResponse:
       type: object
       properties:
-        contact:
+        userIdentifier:
           type: string
-          description: Contact identifier that was unblocked
+          description: User identifier that was unblocked
           example: "user@example.com"
         unblockedFlows:
           type: array
@@ -1056,16 +1056,16 @@ components:
           description: Success message
           example: "Flows unblocked successfully"
       example:
-        contact: "user@example.com"
+        userIdentifier: "user@example.com"
         unblockedFlows: ["passwordless", "social_auth"]
         message: "Flows unblocked successfully"
 
-    V1ContactBlockedFlowsResponse:
+    V1UserBlockedFlowsResponse:
       type: object
       properties:
-        contact:
+        userIdentifier:
           type: string
-          description: Contact identifier
+          description: User identifier
           example: "user@example.com"
         blockedFlows:
           type: array
@@ -1079,6 +1079,6 @@ components:
           description: Total number of blocked flows
           example: 2
       example:
-        contact: "user@example.com"
+        userIdentifier: "user@example.com"
         blockedFlows: ["passwordless", "social_auth"]
         totalCount: 2
