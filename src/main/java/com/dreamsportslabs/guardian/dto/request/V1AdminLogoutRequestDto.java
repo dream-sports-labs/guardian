@@ -15,7 +15,7 @@ public class V1AdminLogoutRequestDto {
 
   public void validate() {
     if (StringUtils.isBlank(userId)) {
-      throw INVALID_REQUEST.getCustomException("User ID is required");
+      throw INVALID_REQUEST.getCustomException("userId is required");
     }
   }
 }

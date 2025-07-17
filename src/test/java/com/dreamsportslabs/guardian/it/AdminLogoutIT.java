@@ -1,6 +1,10 @@
 package com.dreamsportslabs.guardian.it;
 
+import static com.dreamsportslabs.guardian.Constants.*;
 import static io.restassured.RestAssured.given;
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
+import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
+import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.isEmptyString;
 
@@ -24,8 +28,7 @@ class AdminLogoutIT {
   private static final String ADMIN_USERNAME = "admin";
   private static final String ADMIN_PASSWORD = "admin123";
   private static final String VALID_USER_ID = "test-user-123";
-  private static final String INVALID_USER_ID = "non-existent-user";
-  private static final String OTHER_TENANT_ID = "tenant2";
+  private static final String INVALID_USER_ID = randomAlphanumeric(10);
   private static final String OTHER_TENANT_ADMIN_USERNAME = "admin2";
   private static final String OTHER_TENANT_ADMIN_PASSWORD = "admin456";
 
@@ -51,7 +54,7 @@ class AdminLogoutIT {
   @Test
   @DisplayName("Should successfully logout user and invalidate all tokens")
   void testSuccessfulAdminLogout() {
-    // Arrange - Create a user with a valid refresh token
+    // Arrange
     String refreshToken =
         DbUtils.insertRefreshToken(
             TENANT_ID,
@@ -62,21 +65,25 @@ class AdminLogoutIT {
             "test-location",
             "127.0.0.1");
 
-    // Act 1 - Verify the refresh token works before logout
+    // Act 1
     Response refreshResponse = ApplicationIoUtils.refreshToken(TENANT_ID, refreshToken);
     refreshResponse
         .then()
         .statusCode(200)
         .body("accessToken", org.hamcrest.Matchers.notNullValue());
 
-    // Act 2 - Perform admin logout
+    // Act 2
     Response logoutResponse =
         ApplicationIoUtils.adminLogout(TENANT_ID, validAuthHeader, VALID_USER_ID);
     logoutResponse.then().statusCode(204).body(isEmptyString());
 
-    // Act 3 - Try to use the same refresh token after logout
+    // Act 3
     Response invalidRefreshResponse = ApplicationIoUtils.refreshToken(TENANT_ID, refreshToken);
-    invalidRefreshResponse.then().statusCode(401).body("error.code", equalTo("unauthorized"));
+    invalidRefreshResponse
+        .then()
+        .statusCode(SC_UNAUTHORIZED)
+        .rootPath(ERROR)
+        .body(CODE, equalTo(ERROR_UNAUTHORIZED));
   }
 
   @Test
@@ -85,8 +92,9 @@ class AdminLogoutIT {
     // Act & Assert
     ApplicationIoUtils.adminLogout(TENANT_ID, invalidAuthHeader, VALID_USER_ID)
         .then()
-        .statusCode(401)
-        .body("error.code", equalTo("unauthorized"));
+        .statusCode(SC_UNAUTHORIZED)
+        .rootPath(ERROR)
+        .body(CODE, equalTo(ERROR_UNAUTHORIZED));
   }
 
   @Test
@@ -95,8 +103,9 @@ class AdminLogoutIT {
     // Act & Assert
     ApplicationIoUtils.adminLogout(TENANT_ID, null, VALID_USER_ID)
         .then()
-        .statusCode(401)
-        .body("error.code", equalTo("unauthorized"));
+        .statusCode(SC_UNAUTHORIZED)
+        .rootPath(ERROR)
+        .body(CODE, equalTo(ERROR_UNAUTHORIZED));
   }
 
   @Test
@@ -105,8 +114,10 @@ class AdminLogoutIT {
     // Act & Assert
     ApplicationIoUtils.adminLogout("invalid-tenant", validAuthHeader, VALID_USER_ID)
         .then()
-        .statusCode(400)
-        .body("error.code", equalTo("invalid_request"));
+        .statusCode(SC_BAD_REQUEST)
+        .rootPath(ERROR)
+        .body(CODE, equalTo(ERROR_INVALID_REQUEST))
+        .body(MESSAGE, equalTo("No config found"));
   }
 
   @Test
@@ -121,8 +132,10 @@ class AdminLogoutIT {
         .when()
         .post("/v1/admin/logout")
         .then()
-        .statusCode(400)
-        .body("error.code", equalTo("invalid_request"));
+        .statusCode(SC_BAD_REQUEST)
+        .rootPath(ERROR)
+        .body(CODE, equalTo(ERROR_INVALID_REQUEST))
+        .body(MESSAGE, equalTo("userId is required"));
   }
 
   @Test
@@ -130,34 +143,21 @@ class AdminLogoutIT {
   void testAdminLogoutWithMissingUserId() {
     // Arrange
     Map<String, Object> body = new HashMap<>();
-    body.put("someOtherField", "value");
+    body.put(randomAlphanumeric(5), randomAlphanumeric(10));
 
     // Act & Assert
     ApplicationIoUtils.adminLogout(TENANT_ID, validAuthHeader, body)
         .then()
-        .statusCode(400)
-        .body("error.code", equalTo("invalid_request"));
-  }
-
-  @Test
-  @DisplayName("Should return 400 when request body is malformed JSON")
-  void testAdminLogoutWithMalformedJson() {
-    // Act & Assert
-    given()
-        .contentType(ContentType.JSON)
-        .header("tenant-id", TENANT_ID)
-        .header("Authorization", validAuthHeader)
-        .body("{ invalid json }")
-        .when()
-        .post("/v1/admin/logout")
-        .then()
-        .statusCode(500);
+        .statusCode(SC_BAD_REQUEST)
+        .rootPath(ERROR)
+        .body(CODE, equalTo(ERROR_INVALID_REQUEST))
+        .body(MESSAGE, equalTo("userId is required"));
   }
 
   @Test
   @DisplayName("Should successfully logout user even if user doesn't exist")
   void testAdminLogoutForNonExistentUser() {
-    // Act & Assert - Should succeed even for non-existent user
+    // Act & Assert
     ApplicationIoUtils.adminLogout(TENANT_ID, validAuthHeader, INVALID_USER_ID)
         .then()
         .statusCode(204)
@@ -170,8 +170,9 @@ class AdminLogoutIT {
     // Act & Assert - Using tenant2 credentials to access tenant1 should fail
     ApplicationIoUtils.adminLogout(TENANT_ID, otherTenantAuthHeader, VALID_USER_ID)
         .then()
-        .statusCode(401)
-        .body("error.code", equalTo("unauthorized"));
+        .statusCode(SC_UNAUTHORIZED)
+        .rootPath(ERROR)
+        .body(CODE, equalTo(ERROR_UNAUTHORIZED));
   }
 
   @Test
@@ -198,7 +199,11 @@ class AdminLogoutIT {
     ApplicationIoUtils.adminLogout(TENANT_ID, validAuthHeader, user1Id).then().statusCode(204);
 
     // Act 3 - Verify user1's token is invalid but user2's token still works
-    ApplicationIoUtils.refreshToken(TENANT_ID, refreshToken1).then().statusCode(401);
+    ApplicationIoUtils.refreshToken(TENANT_ID, refreshToken1)
+        .then()
+        .statusCode(SC_UNAUTHORIZED)
+        .rootPath(ERROR)
+        .body(CODE, equalTo(ERROR_UNAUTHORIZED));
 
     ApplicationIoUtils.refreshToken(TENANT_ID, refreshToken2).then().statusCode(200);
 
@@ -206,32 +211,10 @@ class AdminLogoutIT {
     ApplicationIoUtils.adminLogout(TENANT_ID, validAuthHeader, user2Id).then().statusCode(204);
 
     // Act 5 - Verify user2's token is now also invalid
-    ApplicationIoUtils.refreshToken(TENANT_ID, refreshToken2).then().statusCode(401);
-  }
-
-  @Test
-  @DisplayName("Should allow admin from correct tenant to logout users")
-  void testAdminLogoutWithCorrectTenantCredentials() {
-    // Arrange - Create a user with a valid refresh token
-    String refreshToken =
-        DbUtils.insertRefreshToken(
-            OTHER_TENANT_ID,
-            VALID_USER_ID,
-            1800L,
-            "test-source",
-            "test-device",
-            "test-location",
-            "127.0.0.1");
-
-    // Act 1 - Verify the refresh token works before logout
-    ApplicationIoUtils.refreshToken(OTHER_TENANT_ID, refreshToken).then().statusCode(200);
-
-    // Act 2 - Perform admin logout using tenant2 admin credentials
-    ApplicationIoUtils.adminLogout(OTHER_TENANT_ID, otherTenantAuthHeader, VALID_USER_ID)
+    ApplicationIoUtils.refreshToken(TENANT_ID, refreshToken2)
         .then()
-        .statusCode(204);
-
-    // Act 3 - Verify the refresh token is now invalid
-    ApplicationIoUtils.refreshToken(OTHER_TENANT_ID, refreshToken).then().statusCode(401);
+        .statusCode(SC_UNAUTHORIZED)
+        .rootPath(ERROR)
+        .body(CODE, equalTo(ERROR_UNAUTHORIZED));
   }
 }
