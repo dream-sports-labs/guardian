@@ -25,59 +25,53 @@ public class PasswordAuth {
 
     return userFlowBlockService
         .isFlowBlocked(tenantId, List.of(dto.getUsername()), BlockFlow.PASSWORD)
-        .flatMap(
+        .map(
             blockedResult -> {
               if (blockedResult.isBlocked()) {
-                log.warn(
-                    "Password flow is blocked for userIdentifier: {} in tenant: {}",
-                    dto.getUsername(),
-                    tenantId);
-                return Single.error(FLOW_BLOCKED.getCustomException(blockedResult.getReason()));
+                throw FLOW_BLOCKED.getCustomException(blockedResult.getReason());
               }
-
-              return userService
-                  .authenticate(
-                      UserDto.builder()
-                          .username(dto.getUsername())
-                          .password(dto.getPassword())
-                          .additionalInfo(dto.getAdditionalInfo())
-                          .build(),
-                      headers,
-                      tenantId)
-                  .flatMap(
-                      user ->
-                          authorizationService.generate(
-                              user, dto.getResponseType(), dto.getMetaInfo(), tenantId));
-            });
+              return blockedResult;
+            })
+        .flatMap(
+            blockedResult ->
+                userService.authenticate(
+                    UserDto.builder()
+                        .username(dto.getUsername())
+                        .password(dto.getPassword())
+                        .additionalInfo(dto.getAdditionalInfo())
+                        .build(),
+                    headers,
+                    tenantId))
+        .flatMap(
+            user ->
+                authorizationService.generate(
+                    user, dto.getResponseType(), dto.getMetaInfo(), tenantId));
   }
 
   public Single<Object> signUp(
       V1SignUpRequestDto dto, MultivaluedMap<String, String> headers, String tenantId) {
     return userFlowBlockService
         .isFlowBlocked(tenantId, List.of(dto.getUsername()), BlockFlow.PASSWORD)
-        .flatMap(
+        .map(
             blockedResult -> {
               if (blockedResult.isBlocked()) {
-                log.warn(
-                    "Password flow is blocked for userIdentifier: {} in tenant: {}",
-                    dto.getUsername(),
-                    tenantId);
-                return Single.error(FLOW_BLOCKED.getCustomException(blockedResult.getReason()));
+                throw FLOW_BLOCKED.getCustomException(blockedResult.getReason());
               }
-
-              return userService
-                  .createUser(
-                      UserDto.builder()
-                          .username(dto.getUsername())
-                          .password(dto.getPassword())
-                          .additionalInfo(dto.getAdditionalInfo())
-                          .build(),
-                      headers,
-                      tenantId)
-                  .flatMap(
-                      user ->
-                          authorizationService.generate(
-                              user, dto.getResponseType(), dto.getMetaInfo(), tenantId));
-            });
+              return blockedResult;
+            })
+        .flatMap(
+            blockedResult ->
+                userService.createUser(
+                    UserDto.builder()
+                        .username(dto.getUsername())
+                        .password(dto.getPassword())
+                        .additionalInfo(dto.getAdditionalInfo())
+                        .build(),
+                    headers,
+                    tenantId))
+        .flatMap(
+            user ->
+                authorizationService.generate(
+                    user, dto.getResponseType(), dto.getMetaInfo(), tenantId));
   }
 }

@@ -59,18 +59,12 @@ public class ContactVerifyService {
               String contactIdentifier = model.getContact().getIdentifier();
               return userFlowBlockService
                   .isFlowBlocked(tenantId, List.of(contactIdentifier), BlockFlow.OTP_VERIFY)
-                  .flatMap(
+                  .map(
                       blockedResult -> {
                         if (blockedResult.isBlocked()) {
-                          log.warn(
-                              "OTP send API is blocked for userIdentifier: {} in tenant: {} with reason: {}",
-                              contactIdentifier,
-                              tenantId,
-                              blockedResult.getReason());
-                          return Single.error(
-                              FLOW_BLOCKED.getCustomException(blockedResult.getReason()));
+                          throw FLOW_BLOCKED.getCustomException(blockedResult.getReason());
                         }
-                        return Single.just(model);
+                        return model;
                       });
             })
         .map(
@@ -142,39 +136,34 @@ public class ContactVerifyService {
                   .map(
                       blockedResult -> {
                         if (blockedResult.isBlocked()) {
-                          log.warn(
-                              "OTP verify API is blocked for userIdentifier: {} in tenant: {} with reason: {}",
-                              contactIdentifier,
-                              tenantId,
-                              blockedResult.getReason());
                           throw FLOW_BLOCKED.getCustomException(blockedResult.getReason());
                         }
                         return model;
-                      })
-                  .flatMap(
-                      otpModel -> {
-                        if (otpModel.getOtp().equals(otp)) {
-                          contactVerifyDao.deleteOtpGenerateModel(tenantId, state);
-                          return Single.just(true);
-                        }
-
-                        otpModel.incRetry();
-
-                        if (otpModel.getTries() >= otpModel.getMaxTries()) {
-                          contactVerifyDao.deleteOtpGenerateModel(tenantId, state);
-                          return Single.error(RETRIES_EXHAUSTED.getException());
-                        }
-
-                        return contactVerifyDao
-                            .setOtpGenerateModel(otpModel, tenantId, state)
-                            .flatMap(
-                                m ->
-                                    Single.error(
-                                        INCORRECT_OTP.getCustomException(
-                                            Map.of(
-                                                "retriesLeft",
-                                                otpModel.getMaxTries() - otpModel.getTries()))));
                       });
+            })
+        .flatMap(
+            otpModel -> {
+              if (otpModel.getOtp().equals(otp)) {
+                contactVerifyDao.deleteOtpGenerateModel(tenantId, state);
+                return Single.just(true);
+              }
+
+              otpModel.incRetry();
+
+              if (otpModel.getTries() >= otpModel.getMaxTries()) {
+                contactVerifyDao.deleteOtpGenerateModel(tenantId, state);
+                return Single.error(RETRIES_EXHAUSTED.getException());
+              }
+
+              return contactVerifyDao
+                  .setOtpGenerateModel(otpModel, tenantId, state)
+                  .flatMap(
+                      m ->
+                          Single.error(
+                              INCORRECT_OTP.getCustomException(
+                                  Map.of(
+                                      "retriesLeft",
+                                      otpModel.getMaxTries() - otpModel.getTries()))));
             });
   }
 

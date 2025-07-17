@@ -66,25 +66,23 @@ public class Passwordless {
             model ->
                 userFlowBlockService
                     .isUserBlocked(model, tenantId)
-                    .flatMap(
+                    .map(
                         blockedResult -> {
                           if (blockedResult.isBlocked()) {
-                            return Single.error(
-                                FLOW_BLOCKED.getCustomException(blockedResult.getReason()));
+                            throw FLOW_BLOCKED.getCustomException(blockedResult.getReason());
                           }
 
                           if (model.getResends() >= model.getMaxResends()) {
                             passwordlessDao.deletePasswordlessModel(state, tenantId);
-                            return Single.error(RESENDS_EXHAUSTED.getException());
+                            throw RESENDS_EXHAUSTED.getException();
                           }
 
                           if ((System.currentTimeMillis() / 1000) < model.getResendAfter()) {
-                            return Single.error(
-                                RESEND_NOT_ALLOWED.getCustomException(
-                                    Map.of(OTP_RESEND_AFTER, model.getResendAfter())));
+                            throw RESEND_NOT_ALLOWED.getCustomException(
+                                Map.of(OTP_RESEND_AFTER, model.getResendAfter()));
                           }
 
-                          return Single.just(model);
+                          return model;
                         }))
         .flatMap(
             model -> {
@@ -186,13 +184,12 @@ public class Passwordless {
             model ->
                 userFlowBlockService
                     .isUserBlocked(model, tenantId)
-                    .flatMap(
+                    .map(
                         blockedResult -> {
                           if (blockedResult.isBlocked()) {
-                            return Single.error(
-                                FLOW_BLOCKED.getCustomException(blockedResult.getReason()));
+                            throw FLOW_BLOCKED.getCustomException(blockedResult.getReason());
                           }
-                          return Single.just(model);
+                          return model;
                         }))
         .flatMap(model -> validateOtp(model, dto.getOtp(), tenantId))
         .flatMap(

@@ -71,11 +71,6 @@ public class SocialAuthService {
                     .map(
                         blockedResult -> {
                           if (blockedResult.isBlocked()) {
-                            log.info(
-                                "Facebook auth API is blocked for email: {} in tenant: {} with reason: {}",
-                                email,
-                                tenantId,
-                                blockedResult.getReason());
                             throw FLOW_BLOCKED.getCustomException(blockedResult.getReason());
                           }
                           return fbUserData;
@@ -167,11 +162,6 @@ public class SocialAuthService {
                     .map(
                         result -> {
                           if (result.isBlocked()) {
-                            log.warn(
-                                "Google auth API is blocked for email: {} in tenant: {} with reason: {}",
-                                email,
-                                tenantId,
-                                result.getReason());
                             throw FLOW_BLOCKED.getCustomException(result.getReason());
                           }
                           return googleUserData;
