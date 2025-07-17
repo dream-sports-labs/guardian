@@ -7,7 +7,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class GenerateOidcTokenRequestDto {
+public class GenerateOidcTokenDto {
   private String userId;
   private String clientId;
   private String tenantId;

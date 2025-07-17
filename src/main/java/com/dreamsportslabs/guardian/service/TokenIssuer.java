@@ -1,6 +1,7 @@
 package com.dreamsportslabs.guardian.service;
 
 import static com.dreamsportslabs.guardian.constant.Constants.ACCESS_TOKEN_JWT_HEADER;
+import static com.dreamsportslabs.guardian.constant.Constants.JWT_HEADERS_KID;
 import static com.dreamsportslabs.guardian.constant.Constants.JWT_HEADERS_TYP;
 import static com.dreamsportslabs.guardian.exception.ErrorEnum.INTERNAL_SERVER_ERROR;
 
@@ -79,6 +80,7 @@ public class TokenIssuer {
                         for (Map.Entry<String, String> entry : headers.entrySet()) {
                           header.set(entry.getKey(), entry.getValue());
                         }
+                        header.set(JWT_HEADERS_KID, signer.getKid());
                       }));
             },
             false)

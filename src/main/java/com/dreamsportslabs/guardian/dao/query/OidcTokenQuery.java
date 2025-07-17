@@ -8,4 +8,10 @@ public class OidcTokenQuery {
           refresh_token_exp, scope, device_name, ip
       ) VALUES (?, ?, ?, ?, ?, ?, ?, INET6_ATON(?))
       """;
+
+  public static final String GET_OIDC_REFRESH_TOKEN =
+      """
+      SELECT * FROM oidc_refresh_token
+      WHERE tenant_id = ? AND refresh_token = ? AND client_id = ?
+      """;
 }

@@ -81,7 +81,8 @@ public class AuthorizationService {
     commonTokenClaims.put(JWT_CLAIMS_SUB, user.getString(USERID));
     commonTokenClaims.put(JWT_CLAIMS_IAT, iat);
     commonTokenClaims.put(JWT_CLAIMS_ISS, config.getTokenConfig().getIssuer());
-    Map<String, Object> accessTokenClaims = commonTokenClaims, idTokenClaims = commonTokenClaims;
+    Map<String, Object> accessTokenClaims = new HashMap<>(commonTokenClaims),
+        idTokenClaims = new HashMap<>(commonTokenClaims);
     accessTokenClaims.put(JWT_CLAIMS_RFT_ID, getRftId(refreshToken));
     accessTokenClaims.put(JWT_CLAIMS_EXP, iat + config.getTokenConfig().getAccessTokenExpiry());
     idTokenClaims.put(JWT_CLAIMS_EXP, iat + config.getTokenConfig().getIdTokenExpiry());

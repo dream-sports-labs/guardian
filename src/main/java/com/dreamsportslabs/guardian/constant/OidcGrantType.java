@@ -1,5 +1,7 @@
 package com.dreamsportslabs.guardian.constant;
 
+import static com.dreamsportslabs.guardian.exception.OidcErrorEnum.UNSUPPORTED_GRANT_TYPE;
+
 import lombok.Getter;
 
 @Getter
@@ -20,6 +22,7 @@ public enum OidcGrantType {
         return grantType;
       }
     }
-    throw new IllegalArgumentException("Invalid OIDC Grant Type: " + type);
+    throw UNSUPPORTED_GRANT_TYPE.getJsonCustomException(
+        "The grant type '" + type + "' is not supported.");
   }
 }

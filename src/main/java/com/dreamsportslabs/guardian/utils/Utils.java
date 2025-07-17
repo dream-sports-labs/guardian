@@ -7,10 +7,8 @@ import io.vertx.rxjava3.core.MultiMap;
 import jakarta.ws.rs.core.MultivaluedMap;
 import java.util.Base64;
 import java.util.regex.Pattern;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 
-@Slf4j
 public final class Utils {
 
   private Utils() {
@@ -58,6 +56,9 @@ public final class Utils {
   }
 
   public static String getRftId(String refreshToken) {
+    if (refreshToken == null) {
+      return null;
+    }
     return getMd5Hash(refreshToken);
   }
 }

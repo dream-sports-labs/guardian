@@ -1,9 +1,9 @@
 package com.dreamsportslabs.guardian.dto.request;
 
 import static com.dreamsportslabs.guardian.constant.OidcGrantType.AUTHORIZATION_CODE;
+import static com.dreamsportslabs.guardian.constant.OidcGrantType.REFRESH_TOKEN;
 import static com.dreamsportslabs.guardian.exception.OidcErrorEnum.INVALID_CLIENT;
 import static com.dreamsportslabs.guardian.exception.OidcErrorEnum.INVALID_REQUEST;
-import static com.dreamsportslabs.guardian.exception.OidcErrorEnum.UNSUPPORTED_GRANT_TYPE;
 
 import com.dreamsportslabs.guardian.constant.OidcGrantType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -43,11 +43,7 @@ public class TokenRequestDto {
     if (StringUtils.isBlank(grantType)) {
       throw INVALID_REQUEST.getJsonCustomException("grant_type is required");
     }
-    try {
-      oidcGrantType = OidcGrantType.fromString(grantType);
-    } catch (IllegalArgumentException e) {
-      throw UNSUPPORTED_GRANT_TYPE.getException();
-    }
+    oidcGrantType = OidcGrantType.fromString(grantType);
     if (oidcGrantType.equals(AUTHORIZATION_CODE) && StringUtils.isBlank(code)) {
       throw INVALID_REQUEST.getJsonCustomException("code is required");
     }
@@ -56,6 +52,9 @@ public class TokenRequestDto {
     }
     if (StringUtils.isBlank(clientId) ^ StringUtils.isBlank(clientSecret)) {
       throw INVALID_CLIENT.getException();
+    }
+    if (oidcGrantType.equals(REFRESH_TOKEN) && StringUtils.isBlank(refreshToken)) {
+      throw INVALID_REQUEST.getJsonCustomException("refresh_token is required");
     }
   }
 }
