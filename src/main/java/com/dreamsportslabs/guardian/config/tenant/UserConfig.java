@@ -9,6 +9,7 @@ public class UserConfig {
   private Boolean isSslEnabled;
   private String createUserPath;
   private String getUserPath;
+  private String getOidcUserPath;
   private String authenticateUserPath;
   private String addProviderPath;
 }

@@ -2,8 +2,10 @@ package com.dreamsportslabs.guardian.utils;
 
 import static com.dreamsportslabs.guardian.constant.Constants.prohibitedForwardingHeaders;
 
+import com.dreamsportslabs.guardian.exception.ErrorEnum;
 import io.vertx.rxjava3.core.MultiMap;
 import jakarta.ws.rs.core.MultivaluedMap;
+import java.util.Base64;
 import java.util.regex.Pattern;
 import org.apache.commons.codec.digest.DigestUtils;
 
@@ -36,5 +38,27 @@ public final class Utils {
 
   public static String getMd5Hash(String input) {
     return DigestUtils.md5Hex(input).toUpperCase();
+  }
+
+  public static String[] getCredentialsFromAuthHeader(String authorizationHeader) {
+    try {
+      String prefix = authorizationHeader.substring(0, 6);
+      String token = authorizationHeader.substring(6).strip();
+      if (!prefix.equals("Basic ")) {
+        throw ErrorEnum.UNAUTHORIZED.getException();
+      }
+      String credentials;
+      credentials = new String(Base64.getDecoder().decode(token.getBytes()));
+      return credentials.split(":", 2);
+    } catch (Exception e) {
+      throw ErrorEnum.UNAUTHORIZED.getException();
+    }
+  }
+
+  public static String getRftId(String refreshToken) {
+    if (refreshToken == null) {
+      return null;
+    }
+    return getMd5Hash(refreshToken);
   }
 }

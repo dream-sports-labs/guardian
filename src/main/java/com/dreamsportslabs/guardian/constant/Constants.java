@@ -9,6 +9,7 @@ public final class Constants {
   public static final String USERID = "userId";
   public static final String PROVIDER = "provider";
   public static final String IS_NEW_USER = "isNewUser";
+  public static final String AUTHORIZATION = "Authorization";
 
   public static final String TOKEN = "token";
   public static final String CODE = "code";
@@ -51,11 +52,22 @@ public final class Constants {
   public static final String TENANT_CONFIG_REFRESH_INTERVAL = "tenant_config_refresh_interval";
 
   // JWT CLAIMS
-  public static final String JWT_CLAIMS_ISS = "iss";
-  public static final String JWT_CLAIMS_SUB = "sub";
-  public static final String JWT_CLAIMS_IAT = "iat";
+  public static final String JWT_CLAIMS_AUD = "aud";
+  public static final String JWT_CLAIMS_CLIENT_ID = "client_id";
   public static final String JWT_CLAIMS_EXP = "exp";
+  public static final String JWT_CLAIMS_IAT = "iat";
+  public static final String JWT_CLAIMS_ISS = "iss";
+  public static final String JWT_CLAIMS_JTI = "jti";
   public static final String JWT_CLAIMS_RFT_ID = "rft_id";
+  public static final String JWT_CLAIMS_SCOPE = "scope";
+  public static final String JWT_CLAIMS_SUB = "sub";
+
+  // JWT HEADERS
+  public static final String JWT_HEADERS_TYP = "typ";
+  public static final String JWT_HEADERS_KID = "kid";
+
+  // JWT HEADERS VALUES
+  public static final String ACCESS_TOKEN_JWT_HEADER = "at+jwt";
 
   public static final ImmutableList<String> fbAuthResponseTypes = ImmutableList.of(CODE, TOKEN);
   public static final ImmutableList<String> passwordlessAuthResponseTypes =
