@@ -32,6 +32,7 @@ public final class Constants {
   public static final String EXPIRY_OPTION_REDIS = "EX";
   public static final String EXPIRE_AT_REDIS = "EXAT";
   public static final String STATIC_OTP_NUMBER = "9";
+  public static final String KEEP_TTL = "KEEPTTL";
 
   // Application config
   public static final String PORT = "port";
@@ -83,6 +84,7 @@ public final class Constants {
 
   public static final String CACHE_KEY_CODE = "CODE";
   public static final String CACHE_KEY_STATE = "STATE";
+  public static final String CACHE_KEY_AUTH_SESSION = "AUTH_SESSION";
 
   public static final String TOKEN_TYPE = "Bearer";
 
@@ -101,6 +103,17 @@ public final class Constants {
 
   public static final String ACCESS_TOKEN_COOKIE_NAME = "AT";
   public static final String REFRESH_TOKEN_COOKIE_NAME = "RT";
+
+  public static final String SCOPE_EMAIL = "email";
+  public static final String CLAIM_EMAIL = "email";
+  public static final String SCOPE_PHONE = "phone";
+  public static final String SCOPE_ADDRESS = "address";
+  public static final String CLAIM_ADDRESS = "address";
+  public static final String SCOPE_OPENID = "openid";
+  public static final String CLAIM_EMAIL_VERIFIED = "email_verified";
+  public static final String CLAIM_PHONE_VERIFIED = "phone_number_verified";
+  public static final String CLAIM_PHONE_NUMBER = "phone_number";
+  public static final String CLAIM_SUB = "sub";
 
   public static final String UNAUTHORIZED_ERROR_CODE = "unauthorized";
   public static final String OTP_RESEND_AFTER = "resendAfter";
@@ -138,4 +151,13 @@ public final class Constants {
   public static final String APP_ID_TOKEN = "idToken";
   public static final String APP_TOKEN_TYPE = "tokenType";
   public static final String APP_TOKEN_CODE_EXPIRY = "expiresIn";
+
+  public static final String OIDC_PARAM_ERROR = "error";
+  public static final String OIDC_PARAM_ERROR_DESCRIPTION = "error_description";
+  public static final String OIDC_PARAM_STATE = "state";
+  public static final String OIDC_PARAM_NONCE = "nonce";
+  public static final String OIDC_PARAM_LOGIN_CHALLENGE = "login_challenge";
+  public static final String OIDC_PARAM_CONSENT_CHALLENGE = "consent_challenge";
+  public static final String OIDC_PARAM_LOGIN_HINT = "login_hint";
+  public static final String OIDC_PARAM_PROMPT = "prompt";
 }
