@@ -38,6 +38,7 @@ public class PasswordlessComplete {
               if (resp instanceof TokenResponseDto tokenResponseDto) {
                 return Response.ok(tokenResponseDto)
                     .cookie(authorizationService.getCookies(tokenResponseDto, tenantId))
+                        "ji"
                     .build();
               }
               return Response.ok(resp).build();
