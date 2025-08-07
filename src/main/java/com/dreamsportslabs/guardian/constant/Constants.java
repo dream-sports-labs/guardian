@@ -30,6 +30,9 @@ public final class Constants {
   public static final String OIDC_CLAIMS_PHONE = "phone_number";
 
   public static final String EXPIRY_OPTION_REDIS = "EX";
+  public static final String SET_IF_EXISTS = "XX";
+  public static final String SET_IF_NOT_EXISTS = "NX";
+  public static final String KEEP_TTL = "KEEPTTL";
   public static final String EXPIRE_AT_REDIS = "EXAT";
   public static final String STATIC_OTP_NUMBER = "9";
 

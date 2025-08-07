@@ -2,9 +2,15 @@ package com.dreamsportslabs.guardian.dao;
 
 import static com.dreamsportslabs.guardian.constant.Constants.CACHE_KEY_STATE;
 import static com.dreamsportslabs.guardian.constant.Constants.EXPIRY_OPTION_REDIS;
+import static com.dreamsportslabs.guardian.constant.Constants.KEEP_TTL;
+import static com.dreamsportslabs.guardian.constant.Constants.SET_IF_EXISTS;
+import static com.dreamsportslabs.guardian.constant.Constants.SET_IF_NOT_EXISTS;
 import static com.dreamsportslabs.guardian.exception.ErrorEnum.INTERNAL_SERVER_ERROR;
 
+import com.dreamsportslabs.guardian.config.tenant.OtpConfig;
+import com.dreamsportslabs.guardian.config.tenant.TenantConfig;
 import com.dreamsportslabs.guardian.dao.model.PasswordlessModel;
+import com.dreamsportslabs.guardian.registry.Registry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import io.reactivex.rxjava3.core.Maybe;
@@ -21,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 public class PasswordlessDao {
   private final Redis redisClient;
   private final ObjectMapper objectMapper;
+  private final Registry registry;
 
   public Maybe<PasswordlessModel> getPasswordlessModel(String state, String tenantId) {
     return redisClient
@@ -30,17 +37,33 @@ public class PasswordlessDao {
 
   @SneakyThrows
   public Single<PasswordlessModel> setPasswordlessModel(PasswordlessModel model, String tenantId) {
+    OtpConfig otpConfig = registry.get(tenantId, TenantConfig.class).getOtpConfig();
     return redisClient
         .rxSend(
             Request.cmd(Command.SET)
                 .arg(getCacheKey(tenantId, model.getState()))
                 .arg(objectMapper.writeValueAsString(model))
                 .arg(EXPIRY_OPTION_REDIS)
-                // Todo: arbitrary expiry to eventually expire, > allowed max otp validity
-                .arg(3600))
+                .arg(otpConfig.getOtpValidity())
+                .arg(SET_IF_NOT_EXISTS))
+        .flatMap(
+            response -> {
+              if (response.toString().equals("OK")) {
+                return Maybe.just(model);
+              } else {
+                return redisClient
+                    .rxSend(
+                        Request.cmd(Command.SET)
+                            .arg(getCacheKey(tenantId, model.getState()))
+                            .arg(objectMapper.writeValueAsString(model))
+                            .arg(EXPIRY_OPTION_REDIS)
+                            .arg(KEEP_TTL)
+                            .arg(SET_IF_EXISTS))
+                    .flatMap(response1 -> Maybe.just(model));
+              }
+            })
         .onErrorResumeNext(err -> Maybe.error(INTERNAL_SERVER_ERROR.getException(err)))
-        .map(response -> model)
-        .toSingle();
+        .switchIfEmpty(Single.just(model));
   }
 
   public void deletePasswordlessModel(String state, String tenantId) {
