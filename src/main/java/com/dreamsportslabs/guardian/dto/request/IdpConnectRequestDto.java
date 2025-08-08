@@ -1,9 +1,11 @@
 package com.dreamsportslabs.guardian.dto.request;
 
 import static com.dreamsportslabs.guardian.constant.Constants.FLOW_SIGNINUP;
+import static com.dreamsportslabs.guardian.constant.Constants.IDENTIFIER_TYPE_CODE;
 import static com.dreamsportslabs.guardian.exception.ErrorEnum.INVALID_REQUEST;
 
 import com.dreamsportslabs.guardian.constant.Flow;
+import com.dreamsportslabs.guardian.constant.IdentifierType;
 import com.dreamsportslabs.guardian.constant.ResponseType;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
@@ -19,6 +21,7 @@ import org.apache.commons.lang3.StringUtils;
 public class IdpConnectRequestDto {
   private String idProvider;
   private String identifier;
+  private String identifierType;
   private String responseType;
   private String nonce;
   private String codeVerifier;
@@ -27,6 +30,7 @@ public class IdpConnectRequestDto {
   @JsonIgnore private Map<String, Object> additionalInfo;
   @JsonIgnore private ResponseType idpResponseType;
   @JsonIgnore private Flow loginFlow;
+  @JsonIgnore private IdentifierType oidcIdentifierType;
 
   @JsonAnyGetter
   public Map<String, Object> getAdditionalInfo() {
@@ -42,6 +46,7 @@ public class IdpConnectRequestDto {
     this.loginFlow = Flow.SIGNINUP;
     this.metaInfo = new MetaInfo();
     this.additionalInfo = new HashMap<>();
+    this.oidcIdentifierType = IdentifierType.CODE;
   }
 
   public void validate() {
@@ -59,6 +64,7 @@ public class IdpConnectRequestDto {
 
     setIdpResponseType();
     setLoginFlow();
+    setOidcIdentifierType();
   }
 
   private void setIdpResponseType() {
@@ -75,6 +81,17 @@ public class IdpConnectRequestDto {
       this.loginFlow = Flow.valueOf(flowValue);
     } catch (IllegalArgumentException e) {
       throw INVALID_REQUEST.getCustomException("Unsupported flow: '" + flow + "'");
+    }
+  }
+
+  private void setOidcIdentifierType() {
+    try {
+      String oidcIdentifierTypeValue =
+          StringUtils.isBlank(identifierType) ? IDENTIFIER_TYPE_CODE : identifierType.toUpperCase();
+      this.oidcIdentifierType = IdentifierType.valueOf(oidcIdentifierTypeValue);
+    } catch (IllegalArgumentException e) {
+      throw INVALID_REQUEST.getCustomException(
+          "Unsupported identifierType: '" + identifierType + "'");
     }
   }
 }

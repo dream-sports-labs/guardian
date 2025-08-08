@@ -17,6 +17,7 @@ import static com.dreamsportslabs.guardian.constant.Constants.OIDC_CLIENT_SECRET
 import static com.dreamsportslabs.guardian.constant.Constants.OIDC_CODE;
 import static com.dreamsportslabs.guardian.constant.Constants.OIDC_CODE_VERIFIER;
 import static com.dreamsportslabs.guardian.constant.Constants.OIDC_GRANT_TYPE;
+import static com.dreamsportslabs.guardian.constant.Constants.OIDC_NONCE;
 import static com.dreamsportslabs.guardian.constant.Constants.OIDC_REDIRECT_URI;
 import static com.dreamsportslabs.guardian.constant.Constants.OIDC_REFRESH_TOKEN;
 import static com.dreamsportslabs.guardian.constant.Constants.OIDC_TOKENS_ACCESS_TOKEN;
@@ -44,6 +45,7 @@ import com.dreamsportslabs.guardian.dto.UserDto;
 import com.dreamsportslabs.guardian.dto.request.IdpConnectRequestDto;
 import com.dreamsportslabs.guardian.dto.response.IdpConnectResponseDto;
 import com.dreamsportslabs.guardian.exception.ErrorEnum;
+import com.dreamsportslabs.guardian.jwtVerifier.TokenVerifier;
 import com.dreamsportslabs.guardian.registry.Registry;
 import com.dreamsportslabs.guardian.utils.Utils;
 import com.google.inject.Inject;
@@ -87,7 +89,7 @@ public class IdpConnectService {
 
     String userIdentifier = oidcProviderConfig.getUserIdentifier();
 
-    return exchangeCodeForTokens(requestDto, oidcProviderConfig)
+    return verifyIdentifierAndGetProviderTokens(requestDto, oidcProviderConfig)
         .map(
             idpTokens -> {
               Provider provider = createProviderFromTokens(idpTokens, providerName);
@@ -144,6 +146,7 @@ public class IdpConnectService {
     Map<String, Object> credentials = new HashMap<>();
     credentials.put(OIDC_TOKENS_ACCESS_TOKEN, idpTokens.getAccessToken());
     credentials.put(OIDC_REFRESH_TOKEN, idpTokens.getRefreshToken());
+    credentials.put(OIDC_TOKENS_ID_TOKEN, idpTokens.getIdToken());
 
     return Provider.builder()
         .name(providerName)
@@ -264,6 +267,50 @@ public class IdpConnectService {
                       .andThen(Single.just(user));
               }
             });
+  }
+
+  private Single<IdpCredentials> verifyIdentifierAndGetProviderTokens(
+      IdpConnectRequestDto idpConnectRequestDto, OidcProviderConfig oidcProviderConfig) {
+
+    switch (idpConnectRequestDto.getOidcIdentifierType()) {
+      case ID_TOKEN:
+        return verifyIdToken(idpConnectRequestDto, oidcProviderConfig);
+      case CODE:
+        return exchangeCodeForTokens(idpConnectRequestDto, oidcProviderConfig);
+      default:
+        return Single.error(ErrorEnum.INVALID_IDENTIFIER_TYPE.getException());
+    }
+  }
+
+  private Single<IdpCredentials> verifyIdToken(
+      IdpConnectRequestDto idpConnectRequestDto, OidcProviderConfig oidcProviderConfig) {
+
+    try {
+      TokenVerifier tokenVerifier =
+          new TokenVerifier(oidcProviderConfig.getJwksUrl(), oidcProviderConfig.getIssuer());
+      Map<String, Object> claims =
+          tokenVerifier.verify(
+              idpConnectRequestDto.getIdentifier(), oidcProviderConfig.getClientId());
+
+      verifyNonceClaim(idpConnectRequestDto, claims);
+      return Single.just(
+          IdpCredentials.builder().idToken(idpConnectRequestDto.getIdentifier()).build());
+
+    } catch (Exception e) {
+      throw INVALID_IDP_TOKEN.getException();
+    }
+  }
+
+  private void verifyNonceClaim(
+      IdpConnectRequestDto idpConnectRequestDto, Map<String, Object> claims) {
+
+    String requestNonce = idpConnectRequestDto.getNonce();
+    if (StringUtils.isNotBlank(requestNonce)) {
+      Object nonceClaim = claims.get(OIDC_NONCE);
+      if (nonceClaim == null || !requestNonce.equals(nonceClaim.toString())) {
+        throw INVALID_IDP_TOKEN.getException();
+      }
+    }
   }
 
   public Single<IdpCredentials> exchangeCodeForTokens(
