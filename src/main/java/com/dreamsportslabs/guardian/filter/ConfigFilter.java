@@ -52,7 +52,10 @@ public class ConfigFilter implements ContainerRequestFilter {
     tenantCache
         .getTenantConfig(tenantId)
         .subscribe(
-            r -> suspendableContext.resume(),
+            r -> {
+              log.debug("Tenant Config: {}", r);
+              suspendableContext.resume();
+            },
             err -> {
               log.error("Error Initializing tenant details", err);
               suspendableContext.resume(err);
