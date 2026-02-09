@@ -48,6 +48,10 @@ public class TenantCache {
         configDao
             .getTenantConfig(tenantId)
             .map(config -> RegistryInit.initializeRegistry(registry, config))
+            .onErrorResumeNext(err->{
+              log.error("Error while loading config" + err.getMessage() + err.toString());
+              return Single.error(err);
+            })
             .toCompletionStage()
             .toCompletableFuture();
   }
