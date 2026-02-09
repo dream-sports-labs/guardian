@@ -57,7 +57,12 @@ public class ConfigFilter implements ContainerRequestFilter {
               suspendableContext.resume();
             },
             err -> {
-              log.error("Error Initializing tenant details", err);
+              log.info("ConfigFilter Time: " + System.currentTimeMillis());
+              log.error(
+                  "Error Initializing tenant details"
+                      + err.getMessage()
+                      + err.toString()
+                      + err.getLocalizedMessage());
               suspendableContext.resume(err);
             });
   }

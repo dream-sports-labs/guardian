@@ -50,6 +50,7 @@ public class TenantConfig {
   }
 
   public EmailConfig getEmailConfig() {
+    log.info("Get EmailConfig Time: " + System.currentTimeMillis());
     log.info(
         "Email Config: {} \n SMS Config: {}\n OtpConfig: {}\n UserConfig: {}\n",
         emailConfig,
