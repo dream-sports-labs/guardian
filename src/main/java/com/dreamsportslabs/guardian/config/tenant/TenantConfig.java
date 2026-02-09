@@ -18,9 +18,11 @@ import java.util.Optional;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 
 @ToString
 @Builder
+@Slf4j
 public class TenantConfig {
 
   @Getter private String tenantId;
@@ -48,6 +50,12 @@ public class TenantConfig {
   }
 
   public EmailConfig getEmailConfig() {
+    log.info(
+        "Email Config: {} \n SMS Config: {}\n OtpConfig: {}\n UserConfig: {}\n",
+        emailConfig,
+        smsConfig,
+        otpConfig,
+        userConfig);
     if (emailConfig == null) {
       throw EMAIL_NOT_CONFIGURED.getException();
     }

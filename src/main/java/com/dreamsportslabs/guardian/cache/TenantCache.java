@@ -35,7 +35,12 @@ public class TenantCache {
   }
 
   public Single<TenantConfig> getTenantConfig(String tenantId) {
-    return Single.fromCompletionStage(cache.get(tenantId));
+    return Single.fromCompletionStage(cache.get(tenantId))
+        .map(
+            tenantConfig -> {
+              log.info("Tenant Config in Config Filter: {}\n", tenantConfig.toString());
+              return tenantConfig;
+            });
   }
 
   private AsyncCacheLoader<String, TenantConfig> getLoader(ConfigDao configDao) {
