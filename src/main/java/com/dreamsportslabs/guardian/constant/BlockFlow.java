@@ -9,7 +9,8 @@ import lombok.Getter;
 @Getter
 public enum BlockFlow {
   PASSWORDLESS("passwordless", List.of("/v1/passwordless/init", "/v1/passwordless/complete")),
-  PASSWORD("password", List.of("/v1/signin", "/v1/signup")),
+  PASSWORD("password", List.of("/v1/signin", "/v2/signin", "/v2/mfa/signin")),
+  PIN("pin", List.of("/v2/signin", "/v2/mfa/signin")),
   SOCIAL_AUTH(
       "social_auth",
       List.of(
