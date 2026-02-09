@@ -10,6 +10,7 @@ import static com.dreamsportslabs.guardian.exception.ErrorEnum.GUEST_LOGIN_NOT_C
 import static com.dreamsportslabs.guardian.exception.ErrorEnum.OIDC_CONFIG_NOT_EXISTS;
 import static com.dreamsportslabs.guardian.exception.ErrorEnum.OIDC_PROVIDER_NOT_CONFIGURED;
 import static com.dreamsportslabs.guardian.exception.ErrorEnum.OTP_NOT_CONFIGURED;
+import static com.dreamsportslabs.guardian.exception.ErrorEnum.PASSWORD_PIN_BLOCK_NOT_CONFIGURED;
 import static com.dreamsportslabs.guardian.exception.ErrorEnum.SMS_NOT_CONFIGURED;
 
 import java.util.Map;
@@ -34,6 +35,7 @@ public class TenantConfig {
   private OtpConfig otpConfig;
   private OidcConfig oidcConfig;
   private ContactVerifyConfig contactVerifyConfig;
+  private PasswordPinBlockConfig passwordPinBlockConfig;
   private Map<String, OidcProviderConfig> oidcProviderConfig;
   private AdminConfig adminConfig;
   private GuestConfig guestConfig;
@@ -113,6 +115,13 @@ public class TenantConfig {
       throw GUEST_LOGIN_NOT_CONFIGURED.getException();
     }
     return guestConfig;
+  }
+
+  public PasswordPinBlockConfig getPasswordPinBlockConfig() {
+    if (passwordPinBlockConfig == null) {
+      throw PASSWORD_PIN_BLOCK_NOT_CONFIGURED.getException();
+    }
+    return passwordPinBlockConfig;
   }
 
   public Optional<FbConfig> findFbConfig() {
