@@ -3,6 +3,7 @@ package com.dreamsportslabs.guardian;
 import static com.dreamsportslabs.guardian.constant.Constants.APPLICATION_CONFIG;
 import static com.dreamsportslabs.guardian.constant.Constants.APPLICATION_SHUTDOWN_GRACE_PERIOD;
 
+import com.dreamsportslabs.guardian.exception.ErrorEnum;
 import com.dreamsportslabs.guardian.injection.GuiceInjector;
 import com.dreamsportslabs.guardian.injection.MainModule;
 import com.dreamsportslabs.guardian.utils.ApplicationUtil;
@@ -37,6 +38,21 @@ public class Main extends Launcher {
   @Override
   public void afterStartingVertx(Vertx vertx) {
     this.initializeGuiceInjector(vertx);
+    // Force early initialization of ErrorEnum to prevent race conditions during class loading
+    // This ensures all enum values and their pre-created exceptions are initialized before
+    // any request processing begins
+    initializeErrorEnum();
+  }
+
+  /**
+   * Forces ErrorEnum class initialization by accessing its values. This prevents race conditions
+   * that can occur when ErrorEnum is first accessed during concurrent request processing, which was
+   * causing intermittent "config not found" errors with misleading stack traces.
+   */
+  private void initializeErrorEnum() {
+    // Accessing values() forces the class to be fully initialized
+    ErrorEnum[] values = ErrorEnum.values();
+    log.info("ErrorEnum initialized with {} error types", values.length);
   }
 
   @Override

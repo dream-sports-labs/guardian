@@ -55,23 +55,25 @@ public class ConfigDao {
     List<Completable> mandatoryConfigSources =
         List.of(appendUserConfig(tenantId, builder), appendTokenConfig(tenantId, builder));
 
+    // Each optional config is wrapped with onErrorComplete so one failure
+    // doesn't prevent other configs from loading
     List<Completable> optionalConfigSources =
         List.of(
-            appendAuthCodeConfig(tenantId, builder),
-            appendEmailConfig(tenantId, builder),
-            appendFbConfig(tenantId, builder),
-            appendGoogleConfig(tenantId, builder),
-            appendSmsConfig(tenantId, builder),
-            appendOtpConfig(tenantId, builder),
-            appendContactVerifyConfig(tenantId, builder),
-            appendPasswordPinBlockConfig(tenantId, builder),
-            appendOidcProviderConfig(tenantId, builder),
-            appendAdminConfig(tenantId, builder),
-            appendOidcConfig(tenantId, builder),
-            appendGuestConfig(tenantId, builder));
+            appendAuthCodeConfig(tenantId, builder).onErrorComplete(),
+            appendEmailConfig(tenantId, builder).onErrorComplete(),
+            appendFbConfig(tenantId, builder).onErrorComplete(),
+            appendGoogleConfig(tenantId, builder).onErrorComplete(),
+            appendSmsConfig(tenantId, builder).onErrorComplete(),
+            appendOtpConfig(tenantId, builder).onErrorComplete(),
+            appendContactVerifyConfig(tenantId, builder).onErrorComplete(),
+            appendPasswordPinBlockConfig(tenantId, builder).onErrorComplete(),
+            appendOidcProviderConfig(tenantId, builder).onErrorComplete(),
+            appendAdminConfig(tenantId, builder).onErrorComplete(),
+            appendOidcConfig(tenantId, builder).onErrorComplete(),
+            appendGuestConfig(tenantId, builder).onErrorComplete());
 
-    return Completable.merge(mandatoryConfigSources)
-        .andThen(Completable.merge(optionalConfigSources).onErrorComplete())
+    return Completable.concat(mandatoryConfigSources)
+        .andThen(Completable.concat(optionalConfigSources))
         .andThen(Single.defer(() -> Single.just(builder.build())));
   }
 
@@ -179,7 +181,12 @@ public class ConfigDao {
         .preparedQuery(query)
         .execute(Tuple.of(tenantId))
         .filter(rowSet -> rowSet.size() > 0)
-        .switchIfEmpty(Single.error(INVALID_REQUEST.getCustomException(errorMessage)))
+        .switchIfEmpty(
+            Single.defer(
+                () -> {
+                  log.warn("Mandatory config not found for tenant {}: {}", tenantId, errorMessage);
+                  return Single.error(INVALID_REQUEST.getCustomException(errorMessage));
+                }))
         .map(rows -> JsonUtils.rowSetToList(rows, configType).get(0));
   }
 

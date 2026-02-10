@@ -148,18 +148,23 @@ public enum ErrorEnum {
   private final String message;
   private final int httpStatusCode;
 
-  @Getter private final WebApplicationException exception;
-
   ErrorEnum(String code, String message, int httpStatusCode) {
     this.code = code;
     this.message = message;
     this.httpStatusCode = httpStatusCode;
+  }
+
+  /**
+   * Creates a new WebApplicationException with the default error message. This method creates a
+   * fresh exception each time to ensure correct stack traces.
+   */
+  public WebApplicationException getException() {
     Response response =
-        Response.status(httpStatusCode)
+        Response.status(this.httpStatusCode)
             .header("Content-Type", "application/json")
-            .entity(new ErrorEntity(code, message))
+            .entity(new ErrorEntity(this.code, this.message))
             .build();
-    this.exception = new WebApplicationException(response);
+    return new WebApplicationException(response);
   }
 
   public WebApplicationException getException(Throwable t) {

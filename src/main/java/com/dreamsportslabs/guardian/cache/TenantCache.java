@@ -38,7 +38,6 @@ public class TenantCache {
     return Single.fromCompletionStage(cache.get(tenantId))
         .map(
             tenantConfig -> {
-              log.info("Tenant Config in Config Filter: {}\n", tenantConfig.toString());
               return tenantConfig;
             });
   }
