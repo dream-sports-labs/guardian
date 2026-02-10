@@ -70,8 +70,8 @@ public class ConfigDao {
             appendOidcConfig(tenantId, builder),
             appendGuestConfig(tenantId, builder));
 
-    return Completable.merge(mandatoryConfigSources)
-        .andThen(Completable.merge(optionalConfigSources).onErrorComplete())
+    return Completable.concat(mandatoryConfigSources)
+        .andThen(Completable.concat(optionalConfigSources).onErrorComplete())
         .andThen(Single.defer(() -> Single.just(builder.build())));
   }
 
