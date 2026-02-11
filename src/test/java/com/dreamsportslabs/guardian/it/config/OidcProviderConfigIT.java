@@ -91,7 +91,7 @@ public class OidcProviderConfigIT {
     requestBody.put(REQUEST_FIELD_CLIENT_ID, "test-client-id");
     requestBody.put(REQUEST_FIELD_CLIENT_SECRET, "test-client-secret");
     requestBody.put(REQUEST_FIELD_REDIRECT_URI, "https://example.com/callback");
-    requestBody.put(REQUEST_FIELD_CLIENT_AUTH_METHOD, "client_secret_post");
+    requestBody.put(REQUEST_FIELD_CLIENT_AUTH_METHOD, "POST");
     Map<String, Object> audienceClaims = new HashMap<>();
     audienceClaims.put("aud1", "value1");
     audienceClaims.put("aud2", "value2");
@@ -517,7 +517,7 @@ public class OidcProviderConfigIT {
     oidcProviderConfigBody.put(REQUEST_FIELD_CLIENT_ID, "test-client-id");
     oidcProviderConfigBody.put(REQUEST_FIELD_CLIENT_SECRET, "test-client-secret");
     oidcProviderConfigBody.put(REQUEST_FIELD_REDIRECT_URI, "https://example.com/callback");
-    oidcProviderConfigBody.put(REQUEST_FIELD_CLIENT_AUTH_METHOD, "client_secret_post");
+    oidcProviderConfigBody.put(REQUEST_FIELD_CLIENT_AUTH_METHOD, "POST");
     oidcProviderConfigBody.put(REQUEST_FIELD_IS_SSL_ENABLED, true);
     oidcProviderConfigBody.put(REQUEST_FIELD_USER_IDENTIFIER, "email");
     Map<String, Object> audienceClaims = new HashMap<>();
