@@ -75,7 +75,7 @@ public class V2UserRefreshTokensIT {
   private static final String TEST_SOURCE_2 = "web";
   private static final String TEST_AUTH_METHOD = "[\"PASSWORD\"]";
   private static final String CREATED_AT = "created_at";
-  private static final String CREATED_AT_FORMAT = "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}";
+  private static final String CREATED_AT_FORMAT = "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z";
 
   private static String firstPartyClientId;
   private static String secondClientId;
