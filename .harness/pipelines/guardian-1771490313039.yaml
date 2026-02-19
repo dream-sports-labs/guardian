@@ -1,0 +1,67 @@
+pipeline:
+  identifier: Build_sesha_04_guardian_1771490330075
+  name: Build guardian
+  orgIdentifier: default
+  projectIdentifier: Demo
+  properties:
+    ci:
+      codebase:
+        build: <+input>
+        connectorRef: account.Github_OAuth_1771490027505
+        repoName: sesha-04/guardian
+  stages:
+    - stage:
+        identifier: build
+        name: build
+        spec:
+          caching:
+            enabled: true
+          cloneCodebase: true
+          execution:
+            steps:
+              - step:
+                  identifier: runlinter
+                  name: run linter
+                  spec:
+                    command: |-
+                      pip install flake8
+                      flake8 .
+                  timeout: ""
+                  type: Run
+              - step:
+                  identifier: upgradedependencies
+                  name: upgrade dependencies
+                  spec:
+                    command: pip install --upgrade pip setuptools
+                  timeout: ""
+                  type: Run
+              - step:
+                  identifier: runtestsandcoverage
+                  name: run tests and coverage
+                  spec:
+                    command: mvn clean verify
+                    reports:
+                      spec:
+                        paths:
+                          - "**/*.xml"
+                      type: JUnit
+                  timeout: ""
+                  type: Run
+              - step:
+                  identifier: dockerbuild
+                  name: docker_build
+                  spec:
+                    caching: true
+                    connectorRef: <+input>
+                    repo: hello/world
+                    tags:
+                      - latest
+                  timeout: ""
+                  type: BuildAndPushDockerRegistry
+          platform:
+            arch: Amd64
+            os: Linux
+          runtime:
+            spec: {}
+            type: Cloud
+        type: CI
