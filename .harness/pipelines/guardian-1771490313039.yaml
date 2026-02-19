@@ -20,22 +20,6 @@ pipeline:
           execution:
             steps:
               - step:
-                  identifier: runlinter
-                  name: run linter
-                  spec:
-                    command: |-
-                      pip install flake8
-                      flake8 .
-                  timeout: ""
-                  type: Run
-              - step:
-                  identifier: upgradedependencies
-                  name: upgrade dependencies
-                  spec:
-                    command: pip install --upgrade pip setuptools
-                  timeout: ""
-                  type: Run
-              - step:
                   identifier: runtestsandcoverage
                   name: run tests and coverage
                   spec:
@@ -58,10 +42,18 @@ pipeline:
                       - latest
                   timeout: ""
                   type: BuildAndPushDockerRegistry
+              - step:
+                  type: ArtifactoryUpload
+                  name: ArtifactoryUpload_1
+                  identifier: ArtifactoryUpload_1
+                  spec:
+                    connectorRef: Jfrog
+                    target: .
+                    sourcePath: .
           platform:
-            arch: Amd64
             os: Linux
+            arch: Amd64
           runtime:
-            spec: {}
             type: Cloud
+            spec: {}
         type: CI
