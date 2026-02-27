@@ -3,6 +3,7 @@ package com.dreamsportslabs.guardian.service;
 import static com.dreamsportslabs.guardian.constant.Constants.AUTHORIZATION;
 import static com.dreamsportslabs.guardian.constant.Constants.ERROR;
 import static com.dreamsportslabs.guardian.constant.Constants.ERROR_DESCRIPTION;
+import static com.dreamsportslabs.guardian.constant.Constants.HTTP_REQUEST_TIMEOUT;
 import static com.dreamsportslabs.guardian.constant.Constants.JWT_CLAIMS_SUB;
 import static com.dreamsportslabs.guardian.constant.Constants.OIDC_AUTHORIZATION_CODE;
 import static com.dreamsportslabs.guardian.constant.Constants.OIDC_CLAIMS_EMAIL;
@@ -416,7 +417,9 @@ public class IdpConnectService {
 
   public Single<IdpCredentials> initiateTokenExchange(
       HttpRequest<Buffer> httpRequest, MultiMap oidcTokenRequestBody) {
+    long httpRequestTimeout = registry.getGlobal(Long.class, HTTP_REQUEST_TIMEOUT);
     return httpRequest
+        .timeout(httpRequestTimeout)
         .rxSendForm(oidcTokenRequestBody)
         .onErrorResumeNext(
             err -> Single.error(INTERNAL_SERVER_ERROR.getCustomException(err.getMessage())))
