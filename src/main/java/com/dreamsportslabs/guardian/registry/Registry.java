@@ -11,6 +11,7 @@ public class Registry {
   private final Map<MultiKey, Object> classMap;
 
   private static final String DEFAULT_NAME = "default";
+  private static final String GLOBAL_SCOPE = "__global__";
 
   public Registry() {
     this.classMap = new HashMap<>();
@@ -31,6 +32,14 @@ public class Registry {
   public <T> void put(String tenant, T object, String name) {
     Objects.requireNonNull(object);
     classMap.put(getKey(object.getClass(), tenant, name), object);
+  }
+
+  public <T> T getGlobal(Class<T> clazz, String name) {
+    return this.get(GLOBAL_SCOPE, clazz, name);
+  }
+
+  public <T> void putGlobal(T object, String name) {
+    this.put(GLOBAL_SCOPE, object, name);
   }
 
   private MultiKey getKey(Class<?> clazz, String tenant, String name) {

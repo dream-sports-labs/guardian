@@ -1,5 +1,6 @@
 package com.dreamsportslabs.guardian.service;
 
+import static com.dreamsportslabs.guardian.constant.Constants.HTTP_REQUEST_TIMEOUT;
 import static com.dreamsportslabs.guardian.constant.Constants.MESSAGE_CHANNEL;
 import static com.dreamsportslabs.guardian.constant.Constants.MESSAGE_TEMPLATE_NAME;
 import static com.dreamsportslabs.guardian.constant.Constants.MESSAGE_TEMPLATE_PARAMS;
@@ -53,10 +54,12 @@ public class OtpService {
   public Completable sendOtpViaSms(
       Contact contact, MultivaluedMap<String, String> headers, String tenantId) {
     SmsConfig config = registry.get(tenantId, TenantConfig.class).getSmsConfig();
+    long httpRequestTimeout = registry.getGlobal(Long.class, HTTP_REQUEST_TIMEOUT);
     return webClient
         .post(config.getPort(), config.getHost(), config.getSendSmsPath())
         .ssl(config.isSslEnabled())
         .putHeaders(Utils.getForwardingHeaders(headers))
+        .timeout(httpRequestTimeout)
         .rxSendJson(
             new JsonObject()
                 .put(MESSAGE_CHANNEL, contact.getChannel().getName())
@@ -89,10 +92,12 @@ public class OtpService {
   public Completable sendOtpViaEmail(
       Contact contact, MultivaluedMap<String, String> headers, String tenantId) {
     EmailConfig config = registry.get(tenantId, TenantConfig.class).getEmailConfig();
+    long httpRequestTimeout = registry.getGlobal(Long.class, HTTP_REQUEST_TIMEOUT);
     return webClient
         .post(config.getPort(), config.getHost(), config.getSendEmailPath())
         .ssl(config.isSslEnabled())
         .putHeaders(Utils.getForwardingHeaders(headers))
+        .timeout(httpRequestTimeout)
         .rxSendJson(
             new JsonObject()
                 .put(MESSAGE_CHANNEL, contact.getChannel().getName())

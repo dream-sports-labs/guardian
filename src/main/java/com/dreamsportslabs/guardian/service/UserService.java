@@ -1,5 +1,6 @@
 package com.dreamsportslabs.guardian.service;
 
+import static com.dreamsportslabs.guardian.constant.Constants.HTTP_REQUEST_TIMEOUT;
 import static com.dreamsportslabs.guardian.constant.Constants.IS_NEW_USER;
 import static com.dreamsportslabs.guardian.constant.Constants.PROVIDER;
 import static com.dreamsportslabs.guardian.constant.Constants.RESPONSE_BODY_STATUS_CODE;
@@ -44,6 +45,7 @@ public class UserService {
     return request
         .putHeaders(Utils.getForwardingHeaders(headers))
         .ssl(userConfig.getIsSslEnabled())
+        .timeout(getHttpRequestTimeout())
         .rxSend()
         .onErrorResumeNext(err -> Single.error(INTERNAL_SERVER_ERROR.getException(err)))
         .map(
@@ -68,6 +70,7 @@ public class UserService {
         .post(userConfig.getPort(), userConfig.getHost(), userConfig.getCreateUserPath())
         .ssl(userConfig.getIsSslEnabled())
         .putHeaders(Utils.getForwardingHeaders(headers))
+        .timeout(getHttpRequestTimeout())
         .rxSendJson(dto)
         .onErrorResumeNext(err -> Single.error(INTERNAL_SERVER_ERROR.getException(err)))
         .map(
@@ -105,6 +108,7 @@ public class UserService {
         .post(userConfig.getPort(), userConfig.getHost(), userConfig.getAuthenticateUserPath())
         .ssl(userConfig.getIsSslEnabled())
         .putHeaders(Utils.getForwardingHeaders(headers))
+        .timeout(getHttpRequestTimeout())
         .rxSendJson(dto)
         .onErrorResumeNext(err -> Single.error(INTERNAL_SERVER_ERROR.getException(err)))
         .map(
@@ -140,6 +144,7 @@ public class UserService {
         .post(userConfig.getPort(), userConfig.getHost(), userConfig.getAddProviderPath())
         .ssl(userConfig.getIsSslEnabled())
         .putHeaders(Utils.getForwardingHeaders(headers))
+        .timeout(getHttpRequestTimeout())
         .rxSendJson(new JsonObject().put(USERID, userId).put(PROVIDER, provider))
         .onErrorResumeNext(err -> Single.error(INTERNAL_SERVER_ERROR.getException(err)))
         .map(this::errorHandling)
@@ -157,6 +162,7 @@ public class UserService {
     return request
         .putHeaders(Utils.getForwardingHeaders(headers))
         .ssl(userConfig.getIsSslEnabled())
+        .timeout(getHttpRequestTimeout())
         .rxSend()
         .onErrorResumeNext(
             err -> {
@@ -196,10 +202,15 @@ public class UserService {
         .patch(userConfig.getPort(), userConfig.getHost(), userConfig.getUpdateUserPath())
         .ssl(userConfig.getIsSslEnabled())
         .putHeaders(Utils.getForwardingHeaders(headers))
+        .timeout(getHttpRequestTimeout())
         .rxSendJson(requestBody)
         .onErrorResumeNext(err -> Single.error(INTERNAL_SERVER_ERROR.getException(err)))
         .map(this::errorHandling)
         .ignoreElement();
+  }
+
+  private long getHttpRequestTimeout() {
+    return registry.getGlobal(Long.class, HTTP_REQUEST_TIMEOUT);
   }
 
   private JsonObject errorHandling(HttpResponse<Buffer> response) {

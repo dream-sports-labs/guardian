@@ -1,10 +1,12 @@
 package com.dreamsportslabs.guardian.service.impl.idproviders;
 
+import static com.dreamsportslabs.guardian.constant.Constants.HTTP_REQUEST_TIMEOUT;
 import static com.dreamsportslabs.guardian.exception.ErrorEnum.INTERNAL_SERVER_ERROR;
 import static com.dreamsportslabs.guardian.exception.ErrorEnum.INVALID_REQUEST;
 
 import com.dreamsportslabs.guardian.config.tenant.FbConfig;
 import com.dreamsportslabs.guardian.injection.GuiceInjector;
+import com.dreamsportslabs.guardian.registry.Registry;
 import com.dreamsportslabs.guardian.service.IdProvider;
 import com.google.common.hash.Hashing;
 import io.reactivex.rxjava3.core.Single;
@@ -19,12 +21,14 @@ import org.apache.commons.lang3.StringUtils;
 @Slf4j
 public class FacebookIdProvider implements IdProvider {
   private final WebClient webClient;
+  private final Registry registry;
   private final String appSecret;
   private final Boolean sendAppSecret;
   private final String fields = "id,name,first_name,middle_name,last_name,email,picture";
 
   public FacebookIdProvider(FbConfig fbConfigDto) {
     this.webClient = GuiceInjector.getGuiceInjector().getInstance(WebClient.class);
+    this.registry = GuiceInjector.getGuiceInjector().getInstance(Registry.class);
     this.appSecret = fbConfigDto.getAppSecret();
     this.sendAppSecret = fbConfigDto.getSendAppSecret();
   }
@@ -41,10 +45,12 @@ public class FacebookIdProvider implements IdProvider {
       request.addQueryParam("appsecret_proof", appSecretProof);
     }
 
+    long httpRequestTimeout = registry.getGlobal(Long.class, HTTP_REQUEST_TIMEOUT);
     return request
         .ssl(true)
         .addQueryParam("access_token", accessToken)
         .addQueryParam("fields", this.fields)
+        .timeout(httpRequestTimeout)
         .rxSend()
         .map(
             res -> {

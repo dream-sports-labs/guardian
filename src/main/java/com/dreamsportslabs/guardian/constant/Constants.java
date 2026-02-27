@@ -62,8 +62,7 @@ public final class Constants {
   public static final String REDIS_PORT = "redis_port";
   public static final String REDIS_TYPE = "redis_type";
   public static final String HTTP_CONNECT_TIMEOUT = "http_connect_timeout";
-  public static final String HTTP_READ_TIMEOUT = "http_read_timeout";
-  public static final String HTTP_WRITE_TIMEOUT = "http_write_timeout";
+  public static final String HTTP_REQUEST_TIMEOUT = "http_request_timeout";
   public static final String TENANT_CONFIG_REFRESH_INTERVAL = "tenant_config_refresh_interval";
   public static final String HTTP_CLIENT_KEEP_ALIVE = "http_client_keep_alive";
   public static final String HTTP_CLIENT_KEEP_ALIVE_TIMEOUT = "http_client_keep_alive_timeout";
