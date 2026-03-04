@@ -276,7 +276,7 @@ public class OidcTokenService {
         throw INVALID_SCOPE.getException();
       }
     }
-    return String.join(" ", requestedScopeList);
+    return String.join(" ", allowedScopeList);
   }
 
   private Single<OidcTokenResponseDto> generateOidcTokensForAuthorizationCodeFlow(
